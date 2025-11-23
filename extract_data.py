@@ -47,7 +47,10 @@ def extract_text_from_url(url, use_selenium=False):
     """Extrait le contenu textuel d'une URL avec option Selenium"""
     
     # Détection des sites nécessitant JavaScript
-    js_sites = ['wahis.woah.org', 'app.', 'dashboard.', '#']
+    js_sites = ['wahis.woah.org', 'app.', 'dashboard.', '#',
+    'alyoum', 'aljazeera', 'akhbar', 'arab', 'saudi', 'gulf',
+    'uae', 'kuwait', 'qatar', 'syria', 'iraq',
+    '.sa', '.eg', '.qa', '.ae', '.ma', '.dz']
     needs_js = any(pattern in url for pattern in js_sites)
     
     if needs_js or use_selenium:
@@ -161,24 +164,27 @@ def extract_with_selenium(url):
             driver.quit()
 
 def detect_language(text):
-    """Détecte la langue du texte"""
     arabic_chars = re.findall(r'[\u0600-\u06FF]', text)
-    if len(arabic_chars) > 20:
+    
+    # Si plus de 5 caractères arabes → Arabe
+    if len(arabic_chars) > 5:
         return 'arabe'
     
+    # Détection français / anglais
     text_lower = text.lower()
-    french_words = ['le', 'la', 'les', 'de', 'des', 'et', 'dans', 'pour', 'est', 'une', 'sur']
-    english_words = ['the', 'and', 'of', 'in', 'to', 'for', 'with', 'is', 'at', 'by', 'on']
-    
-    french_count = sum(1 for word in french_words if f' {word} ' in text_lower)
-    english_count = sum(1 for word in english_words if f' {word} ' in text_lower)
-    
-    if french_count > english_count:
+    french_words = [' le ', ' la ', ' les ', ' des ', ' une ', ' dans ', ' pour ']
+    english_words = [' the ', ' and ', ' of ', ' in ', ' to ', ' with ']
+
+    fr_count = sum(w in text_lower for w in french_words)
+    en_count = sum(w in text_lower for w in english_words)
+
+    if fr_count > en_count:
         return 'français'
-    elif english_count > french_count:
+    elif en_count > fr_count:
         return 'anglais'
     else:
         return 'autre'
+
 
 def extract_date(text, soup):
     """Tente d'extraire la date de publication"""
@@ -216,43 +222,159 @@ def extract_date(text, soup):
     return "01-01-2025"
 
 def extract_location(text):
-    """Extrait les lieux mentionnés"""
-    countries = [
-        'France', 'Tunisie', 'Algérie', 'Maroc', 'Belgique', 'Suisse', 
-        'Canada', 'Espagne', 'Italie', 'Allemagne', 'UK', 'USA',
-        'Égypte', 'Turquie', 'Liban', 'Syrie', 'Jordanie', 'Libye',
-        'Corée', 'Korea', 'République de Corée'
-    ]
-    
-    for country in countries:
-        if country.lower() in text.lower():
-            return country
-    
+    """Extrait les lieux mentionnés (arabe, français, anglais)"""
+
+    text_lower = text.lower()
+
+    # --- PAYS : FR / EN / AR ---
+    country_patterns = {
+        "Tunisie": ["tunisie", "tunisia", "تونس"],
+        "Algérie": ["algérie", "algeria", "الجزائر"],
+        "Maroc": ["maroc", "morocco", "المغرب"],
+        "Libye": ["libye", "libya", "ليبيا"],
+        "Égypte": ["egypte", "egypt", "مصر"],
+        "Arabie Saoudite": ["saudi", "arabie saoudite", "السعودية", "المملكة العربية السعودية"],
+        "Qatar": ["qatar", "قطر"],
+        "Émirats Arabes Unis": ["emirates", "uae", "الإمارات"],
+        "Bahreïn": ["bahrain", "bahrein", "البحرين"],
+        "Koweït": ["kuwait", "الكويت"],
+        "Jordanie": ["jordanie", "jordan", "الأردن"],
+        "Liban": ["liban", "lebanon", "لبنان"],
+        "Syrie": ["syrie", "syria", "سوريا"],
+        "Turquie": ["turquie", "turkey", "تركيا"],
+        "France": ["france"],
+        "Italie": ["italie", "italy"],
+        "Espagne": ["espagne", "spain"],
+        "Allemagne": ["allemagne", "germany"],
+        "Belgique": ["belgique", "belgium"],
+        "Canada": ["canada"],
+        "USA": ["usa", "united states", "états-unis"],
+        "Royaume-Uni": ["uk", "united kingdom", "royaume-uni"],
+        "Corée du Sud": ["korea", "south korea", "كوريا الجنوبية"],
+    }
+
+    # --- VILLES ARABES COURANTES ---
+    city_patterns = {
+        "Riyadh": ["riyadh", "الرياض"],
+        "Jeddah": ["jeddah", "جدة"],
+        "Sfax": ["sfax", "صفاقس"],
+        "Tunis": ["tunis", "تونس"],
+        "Kairouan": ["kairouan", "القيروان"],
+        "Casablanca": ["casablanca", "الدار البيضاء"],
+        "Rabat": ["rabat", "الرباط"],
+        "Tripoli": ["tripoli", "طرابلس"],
+        "Caire": ["cairo", "القاهرة"],
+    }
+
+    # --- Recherche pays ---
+    for country, patterns in country_patterns.items():
+        for p in patterns:
+            if p.lower() in text_lower:
+                return country
+
+    # --- Recherche villes ---
+    for city, patterns in city_patterns.items():
+        for p in patterns:
+            if p.lower() in text_lower:
+                return city
+
     return "Non spécifié"
 
+
 def extract_disease(text, langue):
-    """Extrait le nom de la maladie"""
-    diseases = {
-        'Grippe Aviaire': ['grippe aviaire', 'influenza aviaire', 'bird flu', 'avian influenza', 'h5n1', 'h5n8'],
-        'Peste Porcine Africaine': ['peste porcine', 'african swine fever', 'asf'],
-        'Fièvre Aphteuse': ['fièvre aphteuse', 'foot and mouth', 'fmd'],
-        'Fièvre Catarrhale': ['bluetongue', 'fièvre catarrhale', 'blue tongue'],
-        'Rage': ['rage', 'rabies'],
-        'Brucellose': ['brucellose', 'brucellosis'],
-        'Dermatose Nodulaire': ['lumpy skin', 'dermatose nodulaire', 'lsd', 'dermatose nodulaire contagieuse'],
-        'Maladie de Newcastle': ['newcastle', 'pseudo-peste'],
-        'Tuberculose Bovine': ['tuberculose bovine', 'bovine tuberculosis'],
-        'Salmonellose': ['salmonelle', 'salmonella'],
-    }
-    
+    """Extrait le nom de la maladie parmi une liste étendue avec variantes."""
+
     text_lower = text.lower()
-    
+
+    diseases = {
+        "Anthrax": ["anthrax", "الجمرة الخبيثة", "炭疽"],
+        "Fièvre de la Vallée du Rift": ["rift valley fever", "rvf", "حمى وادي المتصدع", "حمى وادي الصدع"],
+        "Fièvre Catarrhale / Bluetongue": ["bluetongue", "blue tongue", "fièvre catarrhale", "اللسان الأزرق"],
+        "Brucellose (Brucella)": ["brucella", "brucellose", "brucellosis", "البروسيلا", "حمى مالطية"],
+        "Grippe équine (Equine Influenza)": [
+            "equine influenza",
+            "grippe équine",
+            "انفلونزا الخيول",  
+            "influenza equina"
+       ],
+       "SARS-CoV-2 / COVID-19 chez les animaux": [
+            "sars-cov-2",
+            "covid-19",
+            "covid19",
+            "coronavirus",
+            "فيروس كورونا",
+            "كوفيد-19",
+            "covid chez les animaux",
+            "sars cov 2 chez les animaux"
+        ],
+
+        "Rage": ["rabies", "rage", "داء الكلب"],
+        "Fièvre Aphteuse": ["foot and mouth disease", "fmd", "fièvre aphteuse", "الحمى القلاعية"],
+        "Maladie de Newcastle": ["newcastle disease", "newcastle", "مرض نيوكاسل", "نيوكاسل"],
+        "Maladie d’Aujeszky": ["aujeszky", "pseudorabies", "مرض أويزكي", "أويزكي"],
+        "Heartwater": ["heartwater", "ehrlichia ruminantium", "إيرليشيا"],
+        "EHD / Maladie hémorragique épizootique": [
+            "epizootic hemorrhagic disease",
+            "epizootic haemorrhagic disease",
+            "maladie hémorragique épizootique",
+            "maladie hemorragique epizootique",
+            "hémorragique épizootique",
+            "hemorragique epizootique",
+            "hémorragique épidémique",
+            "hemorragique epidemique",
+            "maladie hémorragique épidémique",
+            "مرض النزف الوبائي",
+            "مرض نزيف وبائي",
+            "المرض النزفي الوبائي"
+        ],
+        "Fièvre de West Nile": ["fièvre de west nile", "west nile fever", "حمى غرب النيل"],
+        "Dermatose Nodulaire Contagieuse (LSD)": [
+            "lumpy skin disease",
+            "lsd",
+            "الجلد العقدي",
+            "dermatose nodulaire contagieuse (inf. par le virus de la)",
+            "dermatose nodulaire contagieuse",
+            "dermatose nodulaire"
+        ],
+        "Tuberculose": [
+            "tuberculose",
+            "tuberculosis",
+            "السل"
+        ],
+        "Trypanosomose (Surra)": ["trypanosoma evansi", "surra", "تريبانوسوما", "سورا"],
+        "Tularemia": ["tularemia", "tularemie", "تالاريميا"],
+        "Anaplasmose bovine": ["anaplasmosis", "anaplasmose", "أنابلازما"],
+        "Babésiose": ["babesiosis", "babésiose", "بابيزيا"],
+        "Nécrose hématopoïétique infectieuse": ["nécrose hématopoïétique infectieuse", "infectious hematopoietic necrosis", "مرض النخر الدموي المعدي"],
+        "Échinococcose / Hydatidose": ["echinococcus", "hydatidose", "echinococcosis", "إشينوكوكس"],
+        "Peste des Petits Ruminants": ["peste des petits ruminants", "ppr", "طاعون المجترات الصغيرة"],
+        "Peste Porcine Africaine": ["african swine fever", "asf", "الحمى الأفريقية للخنازير"],
+        "Peste Porcine Classique": ["classical swine fever", "csf", "حمى الخنازير الكلاسيكية"],
+        "Peste Équine": ["equine plague", "طاعون الخيل"],
+        "Peste Aviaire (Influenza Aviaire)": [
+            "avian influenza",
+            "influenza aviaire",
+            "bird flu",
+            "انفلونزا الطيور",
+            "إنفلونزا الطّيور"
+        ],
+        "Fièvre Hémorragique Crimée-Congo": [
+            "crimean congo hemorrhagic fever",
+            "cchf",
+            "حمى القرم الكونغو النزفية"
+        ],
+        "Rinderpest": ["rinderpest", "peste bovine", "طاعون الأبقار"],
+        "Paratuberculose": ["paratuberculosis", "paratuberculose", "باراتوبركولوز"],
+    }
+
     for disease, keywords in diseases.items():
-        for keyword in keywords:
-            if keyword in text_lower:
+        for kw in keywords:
+            if kw.lower() in text_lower:
                 return disease
-    
+
     return "Non identifiée"
+
+
 
 def detect_source_type(url, text):
     """Détecte le type de source"""
