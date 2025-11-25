@@ -14,7 +14,7 @@ from selenium.common.exceptions import TimeoutException
 
 # ============================================
 # VERSION AMÉLIORÉE - AVEC SELENIUM POUR JS
-# ============================================
+# ============================================(-t)
 
 os.makedirs('output', exist_ok=True)
 
@@ -263,7 +263,28 @@ def extract_location(text):
         "Casablanca": ["casablanca", "الدار البيضاء"],
         "Rabat": ["rabat", "الرباط"],
         "Tripoli": ["tripoli", "طرابلس"],
-        "Caire": ["cairo", "القاهرة"],
+        "Le Caire": ["cairo", "القاهرة", "caire"],
+        "East Boston": ["east boston"],
+        # Gouvernorats et villes égyptiennes
+        "Damiette": ["damietta", "دمياط"],
+        "Sharqia": ["sharqia", "الشرقية"],
+        "Zagazig": ["zagazig", "الزقازيق"],
+        "Ismaïlia": ["ismailia", "الإسماعيلية"],
+        "Port-Saïd": ["port said", "بورسعيد"],
+        "Suez": ["suez", "السويس"],
+        "Qalyubia": ["qalyubia", "القليوبية"],
+        "Assouan": ["aswan", "أسوان"],
+        "Louxor": ["luxor", "الأقصر"],
+        "Sohag": ["sohag", "سوهاج"],
+        "Assiout": ["asyut", "أسيوط"],
+        "Minya": ["minya", "المنيا"],
+        "Beheira": ["beheira", "البحيرة"],
+        "Kafr el-Cheikh": ["kafr el-sheikh", "كفر الشيخ"],
+        "Daqahliya": ["daqahliya", "الدقهلية"],
+        "Alexandrie": ["alexandria", "الإسكندرية"],
+        "Sinaï du Nord": ["north sinai", "شمال سيناء"],
+        "Cheikh Zuweid": ["sheikh zuweid", "الشيخ زويد"],
+        "Rafah": ["rafah", "رفح"],
     }
 
     # --- Recherche pays ---
@@ -283,95 +304,76 @@ def extract_location(text):
 
 def extract_disease(text, langue):
     """Extrait le nom de la maladie parmi une liste étendue avec variantes."""
-
     text_lower = text.lower()
-
     diseases = {
         "Anthrax": ["anthrax", "الجمرة الخبيثة", "炭疽"],
         "Fièvre de la Vallée du Rift": ["rift valley fever", "rvf", "حمى وادي المتصدع", "حمى وادي الصدع"],
         "Fièvre Catarrhale / Bluetongue": ["bluetongue", "blue tongue", "fièvre catarrhale", "اللسان الأزرق"],
         "Brucellose (Brucella)": ["brucella", "brucellose", "brucellosis", "البروسيلا", "حمى مالطية"],
         "Grippe équine (Equine Influenza)": [
-            "equine influenza",
-            "grippe équine",
-            "انفلونزا الخيول",  
-            "influenza equina"
-       ],
-       "SARS-CoV-2 / COVID-19": [
-            "sars-cov-2",
-            "covid-19",
-            "covid19",
-            "coronavirus",
-            "فيروس كورونا",
-            "كوفيد-19",
-            "covid chez les animaux",
-            "sars cov 2 chez les animaux"
+            "equine influenza", "grippe équine", "انفلونزا الخيول", "influenza equina"
         ],
-
+        "SARS-CoV-2 / COVID-19": [
+            "sars-cov-2", "covid-19", "covid19", "coronavirus", "فيروس كورونا", "كوفيد-19",
+            "covid chez les animaux", "sars cov 2 chez les animaux"
+        ],
         "Rage": ["rabies", "rage", "داء الكلب"],
         "Fièvre Aphteuse": ["foot and mouth disease", "fmd", "fièvre aphteuse", "الحمى القلاعية"],
         "Maladie de Newcastle": ["newcastle disease", "newcastle", "مرض نيوكاسل", "نيوكاسل"],
-        "Maladie d’Aujeszky": ["aujeszky", "pseudorabies", "مرض أويزكي", "أويزكي"],
+        "Maladie d'Aujeszky": ["aujeszky", "pseudorabies", "مرض أويزكي", "أويزكي"],
         "Heartwater": ["heartwater", "ehrlichia ruminantium", "إيرليشيا"],
         "EHD / Maladie hémorragique épizootique": [
-            "epizootic hemorrhagic disease",
-            "epizootic haemorrhagic disease",
-            "maladie hémorragique épizootique",
-            "maladie hemorragique epizootique",
-            "hémorragique épizootique",
-            "hemorragique epizootique",
-            "hémorragique épidémique",
-            "hemorragique epidemique",
+            "epizootic hemorrhagic disease", "epizootic haemorrhagic disease",
+            "maladie hémorragique épizootique", "maladie hemorragique epizootique",
+            "hémorragique épizootique", "hemorragique epizootique",
+            "hémorragique épidémique", "hemorragique epidemique",
             "maladie hémorragique épidémique",
-            "مرض النزف الوبائي",
-            "مرض نزيف وبائي",
-            "المرض النزفي الوبائي"
+            "مرض النزف الوبائي", "مرض نزيف وبائي", "المرض النزفي الوبائي"
         ],
         "Fièvre de West Nile": ["fièvre de west nile", "west nile fever", "حمى غرب النيل"],
         "Dermatose Nodulaire Contagieuse (LSD)": [
-            "lumpy skin disease",
-            "lsd",
-            "الجلد العقدي",
+            "lumpy skin disease", "lsd", "الجلد العقدي",
             "dermatose nodulaire contagieuse (inf. par le virus de la)",
-            "dermatose nodulaire contagieuse",
-            "dermatose nodulaire"
+            "dermatose nodulaire contagieuse", "dermatose nodulaire"
         ],
-        "Tuberculose": [
-            "tuberculose",
-            "tuberculosis",
-            "السل"
-        ],
+        "Tuberculose": ["tuberculose", "tuberculosis", "السل"],
         "Trypanosomose (Surra)": ["trypanosoma evansi", "surra", "تريبانوسوما", "سورا"],
         "Tularemia": ["tularemia", "tularemie", "تالاريميا"],
         "Anaplasmose bovine": ["anaplasmosis", "anaplasmose", "أنابلازما"],
         "Babésiose": ["babesiosis", "babésiose", "بابيزيا"],
-        "Nécrose hématopoïétique infectieuse": ["nécrose hématopoïétique infectieuse", "infectious hematopoietic necrosis", "مرض النخر الدموي المعدي"],
+        "Nécrose hématopoïétique infectieuse": [
+            "nécrose hématopoïétique infectieuse", "infectious hematopoietic necrosis",
+            "مرض النخر الدموي المعدي"
+        ],
         "Échinococcose / Hydatidose": ["echinococcus", "hydatidose", "echinococcosis", "إشينوكوكس"],
         "Peste des Petits Ruminants": ["peste des petits ruminants", "ppr", "طاعون المجترات الصغيرة"],
         "Peste Porcine Africaine": ["african swine fever", "asf", "الحمى الأفريقية للخنازير"],
         "Peste Porcine Classique": ["classical swine fever", "csf", "حمى الخنازير الكلاسيكية"],
         "Peste Équine": ["equine plague", "طاعون الخيل"],
         "Peste Aviaire (Influenza Aviaire)": [
-            "avian influenza",
-            "influenza aviaire",
-            "bird flu",
-            "انفلونزا الطيور",
-            "إنفلونزا الطّيور"
+            "avian influenza", "influenza aviaire", "bird flu", "انفلونزا الطيور", "إنفلونزا الطّيور"
         ],
         "Fièvre Hémorragique Crimée-Congo": [
-            "crimean congo hemorrhagic fever",
-            "cchf",
-            "حمى القرم الكونغو النزفية"
+            "crimean congo hemorrhagic fever", "cchf", "حمى القرم الكونغو النزفية"
         ],
         "Rinderpest": ["rinderpest", "peste bovine", "طاعون الأبقار"],
         "Paratuberculose": ["paratuberculosis", "paratuberculose", "باراتوبركولوز"],
+        "Clavelée et variole caprine": [
+            "clavelée", "clavele", "variole caprine", "variole ovine",
+            "sheep pox", "goat pox", "sheeppox", "goatpox",
+            "جدري الأغنام", "جدري الماعز", "الجدري"
+        ],
+        "Aethina tumida": [
+            "aethina tumida", "petit coléoptère des ruches", "petit coléoptère de la ruche",
+            "small hive beetle", "shb", "خنفساء الخلية الصغيرة"
+        ]
     }
-
+    
     for disease, keywords in diseases.items():
         for kw in keywords:
             if kw.lower() in text_lower:
                 return disease
-
+    
     return "Non identifiée"
 
 
