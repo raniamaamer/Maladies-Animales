@@ -297,7 +297,7 @@ def extract_disease(text, langue):
             "انفلونزا الخيول",  
             "influenza equina"
        ],
-       "SARS-CoV-2 / COVID-19 chez les animaux": [
+       "SARS-CoV-2 / COVID-19": [
             "sars-cov-2",
             "covid-19",
             "covid19",
