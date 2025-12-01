@@ -1,4 +1,3 @@
-# src/scraper.py
 import os
 import time
 import logging
@@ -9,10 +8,9 @@ from selenium.common.exceptions import TimeoutException
 from bs4 import BeautifulSoup
 import requests
 
-# Récupérer la clé ScrapingBee (en dur pour test – À RÉVOQUER APRÈS UTILISATION)
+# Récupérer la clé ScrapingBee
 SCRAPINGBEE_API_KEY = "8HWG26F8PCZMTQUO0KY3IK0M3FYZVX6P1G57L52MTZ6RIJ6IA7PVTL4ECQP6HPCJJMOF8OIKFCXVZ2C6"
 
-# === Ancienne fonction setup_driver (inchangée) ===
 def setup_driver():
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
@@ -29,36 +27,89 @@ def setup_driver():
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
     return driver
 
-# === Fonction de secours via ScrapingBee ===
 def _scrape_with_scrapingbee(url):
+    """Fonction de secours via ScrapingBee avec options avancées"""
     if not SCRAPINGBEE_API_KEY:
         logging.warning("🚫 Clé ScrapingBee manquante")
         return None
 
     logging.info(f"📡 Appel ScrapingBee pour : {url}")
     try:
+        # Configuration avancée pour les sites protégés
+        params = {
+            "api_key": SCRAPINGBEE_API_KEY,
+            "url": url,
+            "render_js": "true",
+            "wait_for": "body",
+            "timeout": "20000",
+            "premium_proxy": "true",  # Proxy premium pour contourner protections
+            "stealth_proxy": "true",  # Mode furtif
+            "wait": "3000"  # Attendre 3 secondes après le chargement
+        }
+        
         response = requests.get(
-            "https://app.scrapingbee.com/api/v1/",  # ✅ Supprimé les espaces
-            params={
-                "api_key": SCRAPINGBEE_API_KEY,      # ✅ Utilisation de la variable, pas une chaîne
-                "url": url,
-                "render_js": "true",
-                "wait_for": "body",
-                "timeout": "15000"
-            },
-            timeout=20
+            "https://app.scrapingbee.com/api/v1/",
+            params=params,
+            timeout=30
         )
+        
         if response.status_code == 200:
             logging.info("✅ ScrapingBee : succès")
             soup = BeautifulSoup(response.text, "html.parser")
-            for tag in soup(["script", "style", "nav", "footer", "aside", "header"]):
+            
+            # Nettoyer les éléments inutiles
+            for tag in soup(["script", "style", "nav", "footer", "aside", "header", "iframe"]):
                 tag.decompose()
-            title_elem = soup.find("h1")
-            title = title_elem.get_text().strip() if title_elem else "Titre non trouvé"
-            content = soup.get_text(separator=" ", strip=True)
+            
+            # Extraction du titre avec plusieurs stratégies
+            title = None
+            title_selectors = [
+                "h1",
+                ".title",
+                "[class*='title']",
+                "meta[property='og:title']",
+                "meta[name='title']"
+            ]
+            
+            for selector in title_selectors:
+                if selector.startswith("meta"):
+                    elem = soup.find("meta", attrs={"property": "og:title"} if "og:title" in selector else {"name": "title"})
+                    if elem and elem.get("content"):
+                        title = elem.get("content").strip()
+                        break
+                else:
+                    elem = soup.select_one(selector)
+                    if elem:
+                        title = elem.get_text().strip()
+                        if title and len(title) > 5:
+                            break
+            
+            # Extraction du contenu principal
+            content = ""
+            content_selectors = [
+                "article",
+                "main",
+                ".article-content",
+                ".content",
+                "[role='main']",
+                "#content",
+                ".post-content"
+            ]
+            
+            for selector in content_selectors:
+                elem = soup.select_one(selector)
+                if elem:
+                    content = elem.get_text(separator=" ", strip=True)
+                    if content and len(content) > 100:
+                        break
+            
+            # Si pas de contenu, prendre tout le body
+            if not content or len(content) < 100:
+                content = soup.get_text(separator=" ", strip=True)
+            
             return {
                 "url": url,
-                "titre": title,
+                "titre": title or "Titre non trouvé",
                 "contenu": content or "Contenu non récupéré",
             }
         else:
@@ -69,69 +120,129 @@ def _scrape_with_scrapingbee(url):
         logging.error(f"💥 Erreur ScrapingBee pour {url}: {e}")
         return None
 
-# === Fonction compatible avec main.py : extract_article_data(driver, url) ===
 def extract_article_data(driver, url):
+    """Extraction avec détection améliorée des sites protégés"""
+    
+    # Liste des domaines protégés à traiter directement avec ScrapingBee
+    PROTECTED_DOMAINS = ["wahis.woah.org", "alyaum.com", "elfagr.org"]
+    
+    # Vérifier si c'est un site protégé connu
+    if any(domain in url for domain in PROTECTED_DOMAINS):
+        logging.info(f"🔒 Site protégé détecté : {url}")
+        logging.info(f"→ Utilisation directe de ScrapingBee...")
+        fallback = _scrape_with_scrapingbee(url)
+        if fallback:
+            return fallback
+        else:
+            logging.warning(f"⚠️ ScrapingBee échoué, tentative Selenium...")
+            # Continuer avec Selenium en cas d'échec
+    
     try:
         driver.get(url)
         
-        # Attendre le body
+        # Attendre plus longtemps pour les sites dynamiques
         try:
-            WebDriverWait(driver, 10).until(
+            WebDriverWait(driver, 15).until(
                 EC.presence_of_element_located((By.TAG_NAME, "body"))
             )
+            # Attendre que le JavaScript se charge
+            time.sleep(3)
         except TimeoutException:
-            pass
+            logging.warning(f"⚠️ Timeout lors du chargement de {url}")
 
-        # Essayer de fermer les bannières
+        # Gérer les popups de cookies
         close_xpaths = [
-            "//button[contains(text(), 'Accept')]",
-            "//button[contains(text(), 'Accepter')]",
-            "//button[contains(text(), 'OK')]",
-            "//button[contains(text(), 'Autoriser')]"
+            "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'accept')]",
+            "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'accepter')]",
+            "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'ok')]",
+            "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'autoriser')]",
+            "//a[contains(@class, 'close')]",
+            "//button[contains(@class, 'close')]"
         ]
+        
         for xpath in close_xpaths:
             try:
-                btn = driver.find_element(By.XPATH, xpath)
+                btn = WebDriverWait(driver, 2).until(
+                    EC.element_to_be_clickable((By.XPATH, xpath))
+                )
                 driver.execute_script("arguments[0].click();", btn)
-                time.sleep(0.5)
+                time.sleep(1)
+                logging.info("✓ Popup fermé")
                 break
             except:
                 continue
 
-        # Extraire titre
+        # Extraire le titre avec plusieurs stratégies
         title = None
-        for selector in ["h1", ".article-title", ".post-title", "[class*='title']"]:
+        title_selectors = [
+            "h1",
+            ".article-title",
+            ".post-title",
+            "[class*='title']",
+            "h1[class*='heading']",
+            ".entry-title"
+        ]
+        
+        for selector in title_selectors:
             try:
                 elem = driver.find_element(By.CSS_SELECTOR, selector)
                 title = elem.text.strip()
                 if title and len(title) > 5:
+                    logging.info(f"✓ Titre trouvé avec {selector}: {title[:50]}...")
                     break
             except:
                 continue
 
-        # Extraire contenu
+        # Si pas de titre trouvé, chercher dans les meta tags
+        if not title:
+            try:
+                soup = BeautifulSoup(driver.page_source, "html.parser")
+                meta_title = soup.find("meta", property="og:title")
+                if meta_title:
+                    title = meta_title.get("content", "").strip()
+                    logging.info(f"✓ Titre trouvé dans meta og:title")
+            except:
+                pass
+
+        # Extraire le contenu avec plusieurs stratégies
         content = ""
-        for selector in ["article", ".article-content", ".post-content", "main"]:
+        content_selectors = [
+            "article",
+            ".article-content",
+            ".post-content",
+            "main",
+            ".content",
+            "[role='main']",
+            "#content",
+            ".entry-content"
+        ]
+        
+        for selector in content_selectors:
             try:
                 elem = driver.find_element(By.CSS_SELECTOR, selector)
                 content = elem.text.strip()
                 if content and len(content) > 100:
+                    logging.info(f"✓ Contenu trouvé avec {selector} ({len(content)} caractères)")
                     break
             except:
                 continue
 
-        if not content:
+        # Si pas de contenu, prendre le body
+        if not content or len(content) < 100:
             try:
                 body = driver.find_element(By.TAG_NAME, "body")
                 content = body.text.strip()
+                logging.info(f"✓ Contenu extrait du body ({len(content)} caractères)")
             except:
                 content = ""
 
+        # Dernière tentative avec BeautifulSoup
         if not content or len(content) < 50:
             soup = BeautifulSoup(driver.page_source, "html.parser")
-            for tag in soup(["script", "style", "nav", "footer"]):
+            for tag in soup(["script", "style", "nav", "footer", "header", "aside"]):
                 tag.decompose()
             content = soup.get_text(separator=" ", strip=True)
+            logging.info(f"✓ Contenu extrait avec BeautifulSoup ({len(content)} caractères)")
 
         result = {
             "url": url,
@@ -139,30 +250,48 @@ def extract_article_data(driver, url):
             "contenu": content or "Contenu non récupéré",
         }
 
-        # === Vérifier si c'est une page de vérification humaine ===
+        # Vérifier si c'est une page de protection anti-bot
         HUMAN_CHECK_PHRASES = [
             "vérifions que vous êtes humain",
             "checking if the site connection is secure",
             "cloudflare",
             "must verify you are human",
-            "sécurité de votre connexion"
+            "sécurité de votre connexion",
+            "just a moment",
+            "checking your browser",
+            "please wait",
+            "enable javascript"
         ]
+        
         contenu_lower = result["contenu"].lower()
         titre_lower = result["titre"].lower()
 
-        if any(phrase in contenu_lower or phrase in titre_lower for phrase in HUMAN_CHECK_PHRASES):
-            logging.info(f"🔍 Détection de protection anti-bot pour {url} → tentative ScrapingBee")
+        # Si détection de protection ET contenu court
+        is_protected = any(phrase in contenu_lower or phrase in titre_lower for phrase in HUMAN_CHECK_PHRASES)
+        is_short = len(result["contenu"]) < 200
+        
+        if is_protected and is_short:
+            logging.info(f"🔍 Protection anti-bot détectée pour {url}")
+            logging.info(f"→ Tentative avec ScrapingBee...")
             fallback = _scrape_with_scrapingbee(url)
-            if fallback:
+            if fallback and len(fallback["contenu"]) > len(result["contenu"]):
+                logging.info(f"✅ ScrapingBee a récupéré plus de contenu ({len(fallback['contenu'])} vs {len(result['contenu'])} caractères)")
                 return fallback
             else:
-                logging.warning(f"⚠️ ScrapingBee échoué pour {url} – utilisation du contenu brut (probablement Cloudflare)")
+                logging.warning(f"⚠️ ScrapingBee n'a pas amélioré le résultat")
                 return result
         else:
             return result
 
     except Exception as e:
-        logging.error(f"Erreur dans extract_article_data pour {url}: {e}")
+        logging.error(f"💥 Erreur dans extract_article_data pour {url}: {e}")
+        
+        # Tentative finale avec ScrapingBee en cas d'erreur
+        logging.info(f"→ Tentative de récupération avec ScrapingBee...")
+        fallback = _scrape_with_scrapingbee(url)
+        if fallback:
+            return fallback
+        
         return {
             "url": url,
             "titre": "Erreur",
