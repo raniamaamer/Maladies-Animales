@@ -89,6 +89,12 @@ def detect_columns(df):
     
     return id_col, url_col, df
 
+def is_protected_site(url):
+    """Détecte les sites non scrapables : WAHIS + sites Cloudflare"""
+    protected_domains = ["wahis.woah.org", "alyaum.com", "elfagr.org"]
+    return any(domain in url for domain in protected_domains)
+
+
 def main():
     logging.info("🚀 Démarrage du scraping...")
     
@@ -147,6 +153,7 @@ def main():
                 continue
             
             logging.info(f"[{idx+1}/{total}] Traitement [{code}] : {url}")
+            # === FIN AJOUT ===
 
             # Phase 1 : Scraping
             raw_data = extract_article_data(driver, url)

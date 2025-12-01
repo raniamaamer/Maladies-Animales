@@ -20,9 +20,7 @@ def detect_language(text: str) -> str:
 def get_domain_type(url: str) -> str:
     # Heuristique simple pour deviner le type de source
     url_lower = url.lower()
-    if any(site in url_lower for site in ['facebook.com', 'twitter.com', 'x.com', 'instagram.com', 'linkedin.com']):
-        return "réseaux sociaux"
-    elif any(site in url_lower for site in ['gov.', 'ministere', 'oie.int', 'fao.org', 'who.int', 'wto.org']):
+    if any(site in url_lower for site in ['wahis','woah','org']):
         return "site officiel"
     else:
         return "médias"
