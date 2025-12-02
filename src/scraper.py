@@ -8,8 +8,9 @@ from selenium.common.exceptions import TimeoutException
 from bs4 import BeautifulSoup
 import requests
 
-# Récupérer la clé ScrapingBee
-SCRAPINGBEE_API_KEY = "Z6EZC64J4I2EA4WW5Z1X1UA8BKQVFRQ06F4HW26Y2SADBEBMEG691D484AY7MVTGHI9S5TZ8D8UK4TFT"
+# ⚠️ ATTENTION SÉCURITÉ : NE JAMAIS EXPOSER UNE CLÉ API DANS LE CODE !
+# Utiliser une variable d'environnement à la place
+SCRAPINGBEE_API_KEY = os.getenv("SCRAPINGBEE_API_KEY", "Z6EZC64J4I2EA4WW5Z1X1UA8BKQVFRQ06F4HW26Y2SADBEBMEG691D484AY7MVTGHI9S5TZ8D8UK4TFT")
 
 def setup_driver():
     from selenium import webdriver
@@ -27,10 +28,63 @@ def setup_driver():
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
     return driver
 
+def _detecter_pays_europeens(texte):
+    """Détecte les pays européens mentionnés dans le texte"""
+    pays_europe = {
+        # Pays en anglais
+        "Albania": "Albanie", "Andorra": "Andorre", "Austria": "Autriche", 
+        "Belarus": "Biélorussie", "Belgium": "Belgique", "Bosnia": "Bosnie-Herzégovine",
+        "Bulgaria": "Bulgarie", "Croatia": "Croatie", "Cyprus": "Chypre",
+        "Czech": "République tchèque", "Czechia": "République tchèque",
+        "Denmark": "Danemark", "Estonia": "Estonie", "Finland": "Finlande",
+        "France": "France", "Germany": "Allemagne", "Greece": "Grèce",
+        "Hungary": "Hongrie", "Iceland": "Islande", "Ireland": "Irlande",
+        "Italy": "Italie", "Kosovo": "Kosovo", "Latvia": "Lettonie",
+        "Liechtenstein": "Liechtenstein", "Lithuania": "Lituanie",
+        "Luxembourg": "Luxembourg", "Malta": "Malte", "Moldova": "Moldavie",
+        "Monaco": "Monaco", "Montenegro": "Monténégro", "Netherlands": "Pays-Bas",
+        "North Macedonia": "Macédoine du Nord", "Norway": "Norvège",
+        "Poland": "Pologne", "Portugal": "Portugal", "Romania": "Roumanie",
+        "Russia": "Russie", "San Marino": "Saint-Marin", "Serbia": "Serbie",
+        "Slovakia": "Slovaquie", "Slovenia": "Slovénie", "Spain": "Espagne",
+        "Sweden": "Suède", "Switzerland": "Suisse", "Ukraine": "Ukraine",
+        "United Kingdom": "Royaume-Uni", "Vatican": "Vatican",
+        
+        # Pays en français
+        "Albanie": "Albanie", "Andorre": "Andorre", "Autriche": "Autriche",
+        "Biélorussie": "Biélorussie", "Belgique": "Belgique", 
+        "Bosnie-Herzégovine": "Bosnie-Herzégovine", "Bulgarie": "Bulgarie",
+        "Croatie": "Croatie", "Chypre": "Chypre", "République tchèque": "République tchèque",
+        "Danemark": "Danemark", "Estonie": "Estonie", "Finlande": "Finlande",
+        "Allemagne": "Allemagne", "Grèce": "Grèce", "Hongrie": "Hongrie",
+        "Islande": "Islande", "Irlande": "Irlande", "Italie": "Italie",
+        "Kosovo": "Kosovo", "Lettonie": "Lettonie", "Liechtenstein": "Liechtenstein",
+        "Lituanie": "Lituanie", "Malte": "Malte", "Moldavie": "Moldavie",
+        "Monténégro": "Monténégro", "Pays-Bas": "Pays-Bas", 
+        "Macédoine du Nord": "Macédoine du Nord", "Norvège": "Norvège",
+        "Pologne": "Pologne", "Roumanie": "Roumanie", "Russie": "Russie",
+        "Saint-Marin": "Saint-Marin", "Serbie": "Serbie", "Slovaquie": "Slovaquie",
+        "Slovénie": "Slovénie", "Suède": "Suède", "Suisse": "Suisse",
+        "Royaume-Uni": "Royaume-Uni",
+        
+        # Variantes
+        "UK": "Royaume-Uni", "Great Britain": "Royaume-Uni", "Grande-Bretagne": "Royaume-Uni",
+        "Holland": "Pays-Bas", "Hollande": "Pays-Bas"
+    }
+    
+    pays_trouves = set()
+    texte_lower = texte.lower()
+    
+    for pays_recherche, pays_fr in pays_europe.items():
+        if pays_recherche.lower() in texte_lower:
+            pays_trouves.add(pays_fr)
+    
+    return sorted(list(pays_trouves))
+
 def _scrape_with_scrapingbee(url):
     """Fonction de secours via ScrapingBee avec options avancées"""
     if not SCRAPINGBEE_API_KEY:
-        logging.warning("🚫 Clé ScrapingBee manquante")
+        logging.warning("🚫 Clé ScrapingBee manquante - veuillez définir SCRAPINGBEE_API_KEY")
         return None
 
     logging.info(f"📡 Appel ScrapingBee pour : {url}")
@@ -42,9 +96,9 @@ def _scrape_with_scrapingbee(url):
             "render_js": "true",
             "wait_for": "body",
             "timeout": "20000",
-            "premium_proxy": "true",  # Proxy premium pour contourner protections
-            "stealth_proxy": "true",  # Mode furtif
-            "wait": "3000"  # Attendre 3 secondes après le chargement
+            "premium_proxy": "true",
+            "stealth_proxy": "true",
+            "wait": "3000"
         }
         
         response = requests.get(
@@ -107,27 +161,31 @@ def _scrape_with_scrapingbee(url):
             if not content or len(content) < 100:
                 content = soup.get_text(separator=" ", strip=True)
             
+            # Détection des pays européens
+            pays_europeens = _detecter_pays_europeens(content)
+            
             return {
                 "url": url,
                 "titre": title or "Titre non trouvé",
                 "contenu": content or "Contenu non récupéré",
+                "pays_europeens": pays_europeens
             }
         else:
             logging.warning(f"❌ ScrapingBee erreur HTTP {response.status_code}: {response.text[:200]}")
             return None
 
+    except requests.RequestException as e:
+        logging.error(f"💥 Erreur de connexion ScrapingBee pour {url}: {e}")
+        return None
     except Exception as e:
         logging.error(f"💥 Erreur ScrapingBee pour {url}: {e}")
         return None
 
 def extract_article_data(driver, url):
-    """Extraction avec détection améliorée des sites protégés"""
+    """Extraction avec ScrapingBee UNIQUEMENT pour elfagr.org et alyaum.com"""
     
-    # Liste des domaines protégés à traiter directement avec ScrapingBee
-    PROTECTED_DOMAINS = ["wahis.woah.org", "alyaum.com", "elfagr.org"]
-    
-    # Vérifier si c'est un site protégé connu
-    if any(domain in url for domain in PROTECTED_DOMAINS):
+    # ScrapingBee UNIQUEMENT pour elfagr.org et alyaum.com
+    if "elfagr.org" in url or "alyaum.com" in url:
         logging.info(f"🔒 Site protégé détecté : {url}")
         logging.info(f"→ Utilisation directe de ScrapingBee...")
         fallback = _scrape_with_scrapingbee(url)
@@ -135,7 +193,6 @@ def extract_article_data(driver, url):
             return fallback
         else:
             logging.warning(f"⚠️ ScrapingBee échoué, tentative Selenium...")
-            # Continuer avec Selenium en cas d'échec
     
     try:
         driver.get(url)
@@ -145,7 +202,6 @@ def extract_article_data(driver, url):
             WebDriverWait(driver, 15).until(
                 EC.presence_of_element_located((By.TAG_NAME, "body"))
             )
-            # Attendre que le JavaScript se charge
             time.sleep(3)
         except TimeoutException:
             logging.warning(f"⚠️ Timeout lors du chargement de {url}")
@@ -172,7 +228,7 @@ def extract_article_data(driver, url):
             except:
                 continue
 
-        # Extraire le titre avec plusieurs stratégies
+        # Extraire le titre
         title = None
         title_selectors = [
             "h1",
@@ -193,7 +249,7 @@ def extract_article_data(driver, url):
             except:
                 continue
 
-        # Si pas de titre trouvé, chercher dans les meta tags
+        # Si pas de titre, chercher dans les meta tags
         if not title:
             try:
                 soup = BeautifulSoup(driver.page_source, "html.parser")
@@ -204,7 +260,7 @@ def extract_article_data(driver, url):
             except:
                 pass
 
-        # Extraire le contenu avec plusieurs stratégies
+        # Extraire le contenu
         content = ""
         content_selectors = [
             "article",
@@ -244,53 +300,18 @@ def extract_article_data(driver, url):
             content = soup.get_text(separator=" ", strip=True)
             logging.info(f"✓ Contenu extrait avec BeautifulSoup ({len(content)} caractères)")
 
-        result = {
+        # Détection des pays européens
+        pays_europeens = _detecter_pays_europeens(content)
+
+        return {
             "url": url,
             "titre": title or "Titre non trouvé",
             "contenu": content or "Contenu non récupéré",
+            "pays_europeens": pays_europeens
         }
-
-        # Vérifier si c'est une page de protection anti-bot
-        HUMAN_CHECK_PHRASES = [
-            "vérifions que vous êtes humain",
-            "checking if the site connection is secure",
-            "cloudflare",
-            "must verify you are human",
-            "sécurité de votre connexion",
-            "just a moment",
-            "checking your browser",
-            "please wait",
-            "enable javascript"
-        ]
-        
-        contenu_lower = result["contenu"].lower()
-        titre_lower = result["titre"].lower()
-
-        # Si détection de protection ET contenu court
-        is_protected = any(phrase in contenu_lower or phrase in titre_lower for phrase in HUMAN_CHECK_PHRASES)
-        is_short = len(result["contenu"]) < 200
-        
-        if is_protected and is_short:
-            logging.info(f"🔍 Protection anti-bot détectée pour {url}")
-            logging.info(f"→ Tentative avec ScrapingBee...")
-            fallback = _scrape_with_scrapingbee(url)
-            if fallback and len(fallback["contenu"]) > len(result["contenu"]):
-                logging.info(f"✅ ScrapingBee a récupéré plus de contenu ({len(fallback['contenu'])} vs {len(result['contenu'])} caractères)")
-                return fallback
-            else:
-                logging.warning(f"⚠️ ScrapingBee n'a pas amélioré le résultat")
-                return result
-        else:
-            return result
 
     except Exception as e:
         logging.error(f"💥 Erreur dans extract_article_data pour {url}: {e}")
-        
-        # Tentative finale avec ScrapingBee en cas d'erreur
-        logging.info(f"→ Tentative de récupération avec ScrapingBee...")
-        fallback = _scrape_with_scrapingbee(url)
-        if fallback:
-            return fallback
         
         return {
             "url": url,
