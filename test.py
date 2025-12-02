@@ -2,6 +2,11 @@ import sys
 import io
 import os
 
+# Ensure stdout/stderr use UTF-8 encoding so printing emojis (and other
+# non-cp1252 characters) on Windows doesn't raise UnicodeEncodeError.
+# On Python 3.7+ TextIOBase has reconfigure; if not available we wrap the
+# buffer. We first try strict UTF-8, then fall back to replace errors to
+# avoid termination from an encoding problem in constrained environments.
 def _ensure_utf8_io():
     try:
         if getattr(sys.stdout, "reconfigure", None):
@@ -11,6 +16,7 @@ def _ensure_utf8_io():
             sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="strict", line_buffering=True)
             sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="strict", line_buffering=True)
     except Exception:
+        # If strict fails (rare), fall back to replace so output still works
         try:
             if getattr(sys.stdout, "reconfigure", None):
                 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -19,9 +25,11 @@ def _ensure_utf8_io():
                 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace", line_buffering=True)
                 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace", line_buffering=True)
         except Exception:
+            # give up silently; most environments will still be okay
             pass
 
 
+# Ensure UTF-8 as early as possible
 _ensure_utf8_io()
 from pathlib import Path
 
@@ -63,13 +71,14 @@ def test_selenium():
         from selenium import webdriver
         from selenium.webdriver.chrome.service import Service
         from selenium.webdriver.chrome.options import Options
-        from webdriver_manager.chrome import ChromeDriverManager
         
         options = Options()
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
+        options.add_argument('--disable-gpu')
         
-        service = Service(ChromeDriverManager().install())
+        # 🔑 Chemin explicite vers chromedriver.exe
+        service = Service(executable_path=r"C:\tools\chromedriver.exe")
         driver = webdriver.Chrome(service=service, options=options)
         driver.get("https://www.google.com")
         driver.quit()
@@ -96,6 +105,7 @@ def test_ollama():
             for model in models:
                 print(f"    - {model['name']}")
             
+            # Vérifier si llama3.2 est installé
             model_names = [m['name'] for m in models]
             if any('llama3.2' in name for name in model_names):
                 print("✅ Llama 3.2 est installé\n")
@@ -143,75 +153,30 @@ def test_directories():
     return True
 
 def test_input_file():
-    """Vérifie si le fichier d'entrée existe"""
     print("🔍 Test du fichier d'entrée...")
     
-    input_file = Path(__file__).parent / "data" / "input" / "urls.csv"
+    input_file = Path(__file__).parent / "data" / "input" / "urls.csv"  # ✅
     
     if input_file.exists():
         import pandas as pd
         try:
             df = pd.read_csv(input_file)
-            print(f"  ✓ Fichier trouvé avec {len(df)} lignes")
-            print(f"  Colonnes détectées: {', '.join(df.columns.tolist())}")
-            
-            # Détecter automatiquement les colonnes URL
-            url_columns = [col for col in df.columns if any(keyword in col.lower() 
-                          for keyword in ['url', 'lien', 'link', 'site', 'web'])]
-            
-            # Détecter automatiquement les colonnes d'identifiant
-            id_columns = [col for col in df.columns if any(keyword in col.lower() 
-                         for keyword in ['code', 'id', 'identifiant', 'reference', 'ref'])]
-            
-            if url_columns and (id_columns or len(df.columns) >= 2):
-                print(f"  ✓ Colonne URL détectée: {url_columns[0]}")
-                if id_columns:
-                    print(f"  ✓ Colonne ID détectée: {id_columns[0]}")
-                else:
-                    print(f"  ✓ Colonne ID par défaut: {df.columns[0]}")
+            if 'code' in df.columns and 'lien' in df.columns:
+                print(f"  ✓ Fichier trouvé avec {len(df)} URLs")
                 print("✅ Fichier d'entrée valide\n")
                 return True
-            elif len(df.columns) >= 2:
-                print(f"  ⚠️  Colonnes spécifiques non détectées, utilisation par défaut:")
-                print(f"     - Colonne ID: {df.columns[0]}")
-                print(f"     - Colonne URL: {df.columns[1]}")
-                print("✅ Fichier d'entrée utilisable\n")
-                return True
             else:
-                print(f"  ✗ Le fichier doit avoir au moins 2 colonnes")
-                print(f"    Colonnes actuelles: {', '.join(df.columns.tolist())}")
+                print("  ✗ Colonnes 'code' et 'lien' manquantes")
                 print("❌ Format du fichier incorrect\n")
                 return False
-                
         except Exception as e:
             print(f"  ✗ Erreur de lecture: {e}")
-            print("❌ Fichier corrompu ou illisible\n")
             return False
     else:
         print("  ✗ Fichier urls.csv non trouvé dans data/input/")
-        print("\n  📝 Création d'un fichier exemple...")
-        
-        # Créer un fichier exemple
-        try:
-            import pandas as pd
-            example_data = {
-                'code': ['MAL001', 'MAL002', 'MAL003'],
-                'lien': [
-                    'https://example.com/maladie1',
-                    'https://example.com/maladie2',
-                    'https://example.com/maladie3'
-                ]
-            }
-            df_example = pd.DataFrame(example_data)
-            df_example.to_csv(input_file, index=False, encoding='utf-8')
-            print(f"  ✓ Fichier exemple créé: {input_file}")
-            print("  ⚠️  Remplacez-le avec vos vraies données")
-            print("✅ Fichier exemple créé\n")
-            return True
-        except Exception as e:
-            print(f"  ✗ Impossible de créer le fichier exemple: {e}")
-            print("❌ Créez manuellement urls.csv avec au moins 2 colonnes\n")
-            return False
+        print("  Créez le fichier avec les colonnes 'code' et 'lien'")
+        print("❌ Fichier d'entrée manquant\n")
+        return False
 
 def main():
     """Fonction principale"""

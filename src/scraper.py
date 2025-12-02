@@ -1,320 +1,226 @@
-import os
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
 import time
 import logging
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-from bs4 import BeautifulSoup
+import os
 import requests
+from urllib.parse import urlparse
+import json
 
-# ⚠️ ATTENTION SÉCURITÉ : NE JAMAIS EXPOSER UNE CLÉ API DANS LE CODE !
-# Utiliser une variable d'environnement à la place
-SCRAPINGBEE_API_KEY = os.getenv("SCRAPINGBEE_API_KEY", "Z6EZC64J4I2EA4WW5Z1X1UA8BKQVFRQ06F4HW26Y2SADBEBMEG691D484AY7MVTGHI9S5TZ8D8UK4TFT")
+# Configurer le logging
+logging.basicConfig(level=logging.INFO)
+
+# ⚙️ Configurable : définissez le chemin de chromedriver ici
+CHROMEDRIVER_PATH = r"C:\tools\chromedriver.exe"  # Modifiez ce chemin selon votre système
+
+# 🔑 Clé API ScrapingBee (à remplacer par la vôtre)
+SCRAPINGBEE_API_KEY = "S2PQU0IOJ1VW5DPLX8LJ375PY03KBPEOW2CVYRYVT5OCGBC4AZMEIW7AT5CAELTEXRR9P4WQPAMZ40U6"
+
+# 🛡️ Domaines connus comme protégés par Cloudflare (ou bloquants pour Selenium)
+CLOUDFLARE_DOMAINS = {
+    "www.elfagr.org",
+    "www.alyaum.com"
+}
+
+# 🍪 Fichier de cookies
+COOKIES_FILE = "cookies.json"
+
+
+def load_cookies(driver):
+    """Charge les cookies depuis un fichier JSON si disponible."""
+    if os.path.exists(COOKIES_FILE):
+        try:
+            with open(COOKIES_FILE, 'r', encoding='utf-8') as f:
+                cookies = json.load(f)
+                for cookie in cookies:
+                    try:
+                        # Certains champs peuvent causer des erreurs, on les filtre
+                        cookie_dict = {
+                            'name': cookie.get('name'),
+                            'value': cookie.get('value'),
+                            'domain': cookie.get('domain'),
+                            'path': cookie.get('path', '/'),
+                        }
+                        # Ajout optionnel de champs si présents
+                        if 'expiry' in cookie:
+                            cookie_dict['expiry'] = cookie['expiry']
+                        if 'secure' in cookie:
+                            cookie_dict['secure'] = cookie['secure']
+                        if 'httpOnly' in cookie:
+                            cookie_dict['httpOnly'] = cookie['httpOnly']
+                        
+                        driver.add_cookie(cookie_dict)
+                    except Exception as e:
+                        logging.warning(f"Impossible d'ajouter le cookie {cookie.get('name')}: {e}")
+            logging.info(f"✅ Cookies chargés depuis {COOKIES_FILE}")
+        except Exception as e:
+            logging.error(f"Erreur lors du chargement des cookies: {e}")
+    else:
+        logging.info(f"ℹ️ Aucun fichier de cookies trouvé ({COOKIES_FILE})")
+
+
+def save_cookies(driver):
+    """Sauvegarde les cookies actuels dans un fichier JSON."""
+    try:
+        cookies = driver.get_cookies()
+        with open(COOKIES_FILE, 'w', encoding='utf-8') as f:
+            json.dump(cookies, f, indent=2)
+        logging.info(f"✅ Cookies sauvegardés dans {COOKIES_FILE}")
+    except Exception as e:
+        logging.error(f"Erreur lors de la sauvegarde des cookies: {e}")
+
 
 def setup_driver():
-    from selenium import webdriver
-    from selenium.webdriver.chrome.options import Options
     options = Options()
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
     options.add_argument("--lang=fr")
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option('useAutomationExtension', False)
-    driver = webdriver.Chrome(options=options)
-    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+    options.add_argument("--disable-images")
+    options.add_experimental_option("excludeSwitches", ["enable-logging"])
+
+    if CHROMEDRIVER_PATH and os.path.exists(CHROMEDRIVER_PATH):
+        service = Service(executable_path=CHROMEDRIVER_PATH)
+        logging.info(f"Utilisation de ChromeDriver manuel : {CHROMEDRIVER_PATH}")
+    else:
+        try:
+            from webdriver_manager.chrome import ChromeDriverManager
+            logging.info("Téléchargement automatique de ChromeDriver via webdriver-manager...")
+            service = Service(ChromeDriverManager().install())
+        except ImportError:
+            raise ImportError(
+                "webdriver-manager n'est pas installé et aucun ChromeDriver manuel n'est fourni.\n"
+                "Installez-le avec : pip install webdriver-manager\n"
+                "OU définissez un chemin valide dans CHROMEDRIVER_PATH."
+            )
+
+    driver = webdriver.Chrome(service=service, options=options)
     return driver
 
-def _detecter_pays_europeens(texte):
-    """Détecte les pays européens mentionnés dans le texte"""
-    pays_europe = {
-        # Pays en anglais
-        "Albania": "Albanie", "Andorra": "Andorre", "Austria": "Autriche", 
-        "Belarus": "Biélorussie", "Belgium": "Belgique", "Bosnia": "Bosnie-Herzégovine",
-        "Bulgaria": "Bulgarie", "Croatia": "Croatie", "Cyprus": "Chypre",
-        "Czech": "République tchèque", "Czechia": "République tchèque",
-        "Denmark": "Danemark", "Estonia": "Estonie", "Finland": "Finlande",
-        "France": "France", "Germany": "Allemagne", "Greece": "Grèce",
-        "Hungary": "Hongrie", "Iceland": "Islande", "Ireland": "Irlande",
-        "Italy": "Italie", "Kosovo": "Kosovo", "Latvia": "Lettonie",
-        "Liechtenstein": "Liechtenstein", "Lithuania": "Lituanie",
-        "Luxembourg": "Luxembourg", "Malta": "Malte", "Moldova": "Moldavie",
-        "Monaco": "Monaco", "Montenegro": "Monténégro", "Netherlands": "Pays-Bas",
-        "North Macedonia": "Macédoine du Nord", "Norway": "Norvège",
-        "Poland": "Pologne", "Portugal": "Portugal", "Romania": "Roumanie",
-        "Russia": "Russie", "San Marino": "Saint-Marin", "Serbia": "Serbie",
-        "Slovakia": "Slovaquie", "Slovenia": "Slovénie", "Spain": "Espagne",
-        "Sweden": "Suède", "Switzerland": "Suisse", "Ukraine": "Ukraine",
-        "United Kingdom": "Royaume-Uni", "Vatican": "Vatican",
-        
-        # Pays en français
-        "Albanie": "Albanie", "Andorre": "Andorre", "Autriche": "Autriche",
-        "Biélorussie": "Biélorussie", "Belgique": "Belgique", 
-        "Bosnie-Herzégovine": "Bosnie-Herzégovine", "Bulgarie": "Bulgarie",
-        "Croatie": "Croatie", "Chypre": "Chypre", "République tchèque": "République tchèque",
-        "Danemark": "Danemark", "Estonie": "Estonie", "Finlande": "Finlande",
-        "Allemagne": "Allemagne", "Grèce": "Grèce", "Hongrie": "Hongrie",
-        "Islande": "Islande", "Irlande": "Irlande", "Italie": "Italie",
-        "Kosovo": "Kosovo", "Lettonie": "Lettonie", "Liechtenstein": "Liechtenstein",
-        "Lituanie": "Lituanie", "Malte": "Malte", "Moldavie": "Moldavie",
-        "Monténégro": "Monténégro", "Pays-Bas": "Pays-Bas", 
-        "Macédoine du Nord": "Macédoine du Nord", "Norvège": "Norvège",
-        "Pologne": "Pologne", "Roumanie": "Roumanie", "Russie": "Russie",
-        "Saint-Marin": "Saint-Marin", "Serbie": "Serbie", "Slovaquie": "Slovaquie",
-        "Slovénie": "Slovénie", "Suède": "Suède", "Suisse": "Suisse",
-        "Royaume-Uni": "Royaume-Uni",
-        
-        # Variantes
-        "UK": "Royaume-Uni", "Great Britain": "Royaume-Uni", "Grande-Bretagne": "Royaume-Uni",
-        "Holland": "Pays-Bas", "Hollande": "Pays-Bas"
-    }
-    
-    pays_trouves = set()
-    texte_lower = texte.lower()
-    
-    for pays_recherche, pays_fr in pays_europe.items():
-        if pays_recherche.lower() in texte_lower:
-            pays_trouves.add(pays_fr)
-    
-    return sorted(list(pays_trouves))
 
-def _scrape_with_scrapingbee(url):
-    """Fonction de secours via ScrapingBee avec options avancées"""
-    if not SCRAPINGBEE_API_KEY:
-        logging.warning("🚫 Clé ScrapingBee manquante - veuillez définir SCRAPINGBEE_API_KEY")
-        return None
-
-    logging.info(f"📡 Appel ScrapingBee pour : {url}")
+def extract_with_scrapingbee(url):
+    """Utilise ScrapingBee pour contourner Cloudflare."""
+    logging.info(f"Utilisation de ScrapingBee pour : {url}")
     try:
-        # Configuration avancée pour les sites protégés
-        params = {
-            "api_key": SCRAPINGBEE_API_KEY,
-            "url": url,
-            "render_js": "true",
-            "wait_for": "body",
-            "timeout": "20000",
-            "premium_proxy": "true",
-            "stealth_proxy": "true",
-            "wait": "3000"
-        }
-        
         response = requests.get(
             "https://app.scrapingbee.com/api/v1/",
-            params=params,
+            params={
+                "api_key": SCRAPINGBEE_API_KEY,
+                "url": url,
+                "render_js": "true",
+                "wait": "3000",
+                "premium_proxy": "true",
+                "country_code": "fr"
+            },
             timeout=30
         )
-        
         if response.status_code == 200:
-            logging.info("✅ ScrapingBee : succès")
+            from bs4 import BeautifulSoup
             soup = BeautifulSoup(response.text, "html.parser")
-            
-            # Nettoyer les éléments inutiles
-            for tag in soup(["script", "style", "nav", "footer", "aside", "header", "iframe"]):
-                tag.decompose()
-            
-            # Extraction du titre avec plusieurs stratégies
+            # Titre
             title = None
-            title_selectors = [
-                "h1",
-                ".title",
-                "[class*='title']",
-                "meta[property='og:title']",
-                "meta[name='title']"
-            ]
-            
-            for selector in title_selectors:
-                if selector.startswith("meta"):
-                    elem = soup.find("meta", attrs={"property": "og:title"} if "og:title" in selector else {"name": "title"})
-                    if elem and elem.get("content"):
-                        title = elem.get("content").strip()
-                        break
-                else:
-                    elem = soup.select_one(selector)
-                    if elem:
-                        title = elem.get_text().strip()
-                        if title and len(title) > 5:
-                            break
-            
-            # Extraction du contenu principal
+            for tag in ["h1", "title"]:
+                elem = soup.find(tag)
+                if elem and elem.get_text(strip=True):
+                    title = elem.get_text(strip=True)
+                    break
+            # Contenu
             content = ""
-            content_selectors = [
-                "article",
-                "main",
-                ".article-content",
-                ".content",
-                "[role='main']",
-                "#content",
-                ".post-content"
-            ]
-            
-            for selector in content_selectors:
+            for selector in ["article", ".article-content", ".post-content", "main", "#content", "body"]:
                 elem = soup.select_one(selector)
-                if elem:
-                    content = elem.get_text(separator=" ", strip=True)
-                    if content and len(content) > 100:
-                        break
-            
-            # Si pas de contenu, prendre tout le body
-            if not content or len(content) < 100:
-                content = soup.get_text(separator=" ", strip=True)
-            
-            # Détection des pays européens
-            pays_europeens = _detecter_pays_europeens(content)
-            
+                if elem and elem.get_text(strip=True):
+                    content = elem.get_text(strip=True)
+                    break
+            if not content:
+                body = soup.find("body")
+                content = body.get_text(strip=True) if body else ""
             return {
                 "url": url,
-                "titre": title or "Titre non trouvé",
-                "contenu": content or "Contenu non récupéré",
-                "pays_europeens": pays_europeens
+                "titre": title or "Titre non trouvé (ScrapingBee)",
+                "contenu": content or "Contenu non récupéré (ScrapingBee)"
             }
         else:
-            logging.warning(f"❌ ScrapingBee erreur HTTP {response.status_code}: {response.text[:200]}")
-            return None
-
-    except requests.RequestException as e:
-        logging.error(f"💥 Erreur de connexion ScrapingBee pour {url}: {e}")
-        return None
+            logging.error(f"ScrapingBee error {response.status_code}: {response.text}")
+            return {
+                "url": url,
+                "titre": "Erreur ScrapingBee",
+                "contenu": f"Status {response.status_code}"
+            }
     except Exception as e:
-        logging.error(f"💥 Erreur ScrapingBee pour {url}: {e}")
-        return None
+        logging.error(f"Exception ScrapingBee pour {url}: {e}")
+        return {
+            "url": url,
+            "titre": "Erreur ScrapingBee",
+            "contenu": str(e)
+        }
+
 
 def extract_article_data(driver, url):
-    """Extraction avec ScrapingBee UNIQUEMENT pour elfagr.org et alyaum.com"""
-    
-    # ScrapingBee UNIQUEMENT pour elfagr.org et alyaum.com
-    if "elfagr.org" in url or "alyaum.com" in url:
-        logging.info(f"🔒 Site protégé détecté : {url}")
-        logging.info(f"→ Utilisation directe de ScrapingBee...")
-        fallback = _scrape_with_scrapingbee(url)
-        if fallback:
-            return fallback
-        else:
-            logging.warning(f"⚠️ ScrapingBee échoué, tentative Selenium...")
-    
+    # 🔍 Détecter si le domaine nécessite ScrapingBee
+    domain = urlparse(url).netloc
+    if domain in CLOUDFLARE_DOMAINS:
+        return extract_with_scrapingbee(url)
+
+    # 🧾 Sinon, utiliser Selenium comme avant (INCHANGÉ)
     try:
+        logging.info(f"Chargement de l'URL : {url}")
         driver.get(url)
         
-        # Attendre plus longtemps pour les sites dynamiques
-        try:
-            WebDriverWait(driver, 15).until(
-                EC.presence_of_element_located((By.TAG_NAME, "body"))
-            )
-            time.sleep(3)
-        except TimeoutException:
-            logging.warning(f"⚠️ Timeout lors du chargement de {url}")
-
-        # Gérer les popups de cookies
-        close_xpaths = [
-            "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'accept')]",
-            "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'accepter')]",
-            "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'ok')]",
-            "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'autoriser')]",
-            "//a[contains(@class, 'close')]",
-            "//button[contains(@class, 'close')]"
-        ]
+        # 🍪 Charger les cookies après le premier chargement de la page
+        load_cookies(driver)
         
-        for xpath in close_xpaths:
-            try:
-                btn = WebDriverWait(driver, 2).until(
-                    EC.element_to_be_clickable((By.XPATH, xpath))
-                )
-                driver.execute_script("arguments[0].click();", btn)
-                time.sleep(1)
-                logging.info("✓ Popup fermé")
-                break
-            except:
-                continue
+        # Recharger la page avec les cookies
+        driver.refresh()
+        time.sleep(2)
 
-        # Extraire le titre
+        # Extraction du titre
         title = None
-        title_selectors = [
-            "h1",
-            ".article-title",
-            ".post-title",
-            "[class*='title']",
-            "h1[class*='heading']",
-            ".entry-title"
-        ]
-        
+        title_selectors = ["h1", "header h1", ".article-title", ".post-title", "title"]
         for selector in title_selectors:
             try:
                 elem = driver.find_element(By.CSS_SELECTOR, selector)
                 title = elem.text.strip()
-                if title and len(title) > 5:
-                    logging.info(f"✓ Titre trouvé avec {selector}: {title[:50]}...")
+                if title:
                     break
-            except:
+            except Exception:
                 continue
 
-        # Si pas de titre, chercher dans les meta tags
-        if not title:
-            try:
-                soup = BeautifulSoup(driver.page_source, "html.parser")
-                meta_title = soup.find("meta", property="og:title")
-                if meta_title:
-                    title = meta_title.get("content", "").strip()
-                    logging.info(f"✓ Titre trouvé dans meta og:title")
-            except:
-                pass
-
-        # Extraire le contenu
+        # Extraction du contenu principal
         content = ""
-        content_selectors = [
-            "article",
-            ".article-content",
-            ".post-content",
-            "main",
-            ".content",
-            "[role='main']",
-            "#content",
-            ".entry-content"
-        ]
-        
+        content_selectors = ["article", ".article-content", ".post-content", "main", "#content", "body"]
         for selector in content_selectors:
             try:
                 elem = driver.find_element(By.CSS_SELECTOR, selector)
                 content = elem.text.strip()
-                if content and len(content) > 100:
-                    logging.info(f"✓ Contenu trouvé avec {selector} ({len(content)} caractères)")
+                if content:
                     break
-            except:
+            except Exception:
                 continue
 
-        # Si pas de contenu, prendre le body
-        if not content or len(content) < 100:
+        # Dernier recours : tout le corps de la page
+        if not content:
             try:
                 body = driver.find_element(By.TAG_NAME, "body")
                 content = body.text.strip()
-                logging.info(f"✓ Contenu extrait du body ({len(content)} caractères)")
-            except:
+            except Exception:
                 content = ""
 
-        # Dernière tentative avec BeautifulSoup
-        if not content or len(content) < 50:
-            soup = BeautifulSoup(driver.page_source, "html.parser")
-            for tag in soup(["script", "style", "nav", "footer", "header", "aside"]):
-                tag.decompose()
-            content = soup.get_text(separator=" ", strip=True)
-            logging.info(f"✓ Contenu extrait avec BeautifulSoup ({len(content)} caractères)")
-
-        # Détection des pays européens
-        pays_europeens = _detecter_pays_europeens(content)
+        # 🍪 Sauvegarder les cookies à la fin
+        save_cookies(driver)
 
         return {
             "url": url,
             "titre": title or "Titre non trouvé",
             "contenu": content or "Contenu non récupéré",
-            "pays_europeens": pays_europeens
         }
 
     except Exception as e:
-        logging.error(f"💥 Erreur dans extract_article_data pour {url}: {e}")
-        
+        logging.error(f"Erreur lors du scraping de {url}: {str(e)}")
         return {
             "url": url,
             "titre": "Erreur",
-            "contenu": f"Erreur lors du scraping : {str(e)}"
+            "contenu": "Erreur lors du scraping",
         }
