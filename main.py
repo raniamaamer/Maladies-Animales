@@ -5,8 +5,8 @@ from src.llm_processor import extract_fields_with_llm
 import logging
 import time
 
-INPUT_FILE = "data/input/url1.csv"
-OUTPUT_FILE = "data/output/output.csv"
+INPUT_FILE = "data/input/urls.csv"
+OUTPUT_FILE = "data/output/output_dataset.csv"
 
 def main():
     df_input = pd.read_csv(INPUT_FILE)

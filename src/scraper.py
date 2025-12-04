@@ -16,12 +16,15 @@ logging.basicConfig(level=logging.INFO)
 CHROMEDRIVER_PATH = r"C:\tools\chromedriver.exe"  # Modifiez ce chemin selon votre système
 
 # 🔑 Clé API ScrapingBee (à remplacer par la vôtre)
-SCRAPINGBEE_API_KEY = "S2PQU0IOJ1VW5DPLX8LJ375PY03KBPEOW2CVYRYVT5OCGBC4AZMEIW7AT5CAELTEXRR9P4WQPAMZ40U6"
+SCRAPINGBEE_API_KEY = "1LUZP88NNZZ2ODI23R376AN6JIBU0W9IRIPSZT7JXVDHG6XD3MGCMCTNMUSWJOS74P45MSVCSEV3EMVK"
 
 # 🛡️ Domaines connus comme protégés par Cloudflare (ou bloquants pour Selenium)
 CLOUDFLARE_DOMAINS = {
     "www.elfagr.org",
-    "www.alyaum.com"
+    "www.alyaum.com",
+    "www.woodtv.com",
+    "www.nouvelles-du-monde.com",
+    "equusmagazine.com"
 }
 
 # 🍪 Fichier de cookies

@@ -1,122 +1,52 @@
 [
   {
-    "domain": ".yna.co.kr",
-    "expiry": 1799251505,
-    "httpOnly": false,
-    "name": "_ga_3DRTCWDZK9",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": "GS2.1.s1764690940$o1$g1$t1764691505$j58$l0$h0"
-  },
-  {
-    "domain": "fr.yna.co.kr",
-    "expiry": 1764691640,
-    "httpOnly": true,
-    "name": "NSC_16Z_xxxdbdif_205_443",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": true,
-    "value": "ffffffff0909188e45525d5f4f58455e445a4a423660"
-  },
-  {
-    "domain": ".yna.co.kr",
-    "expiry": 1799250939,
-    "httpOnly": false,
-    "name": "_ga",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": true,
-    "value": "GA1.1.1611229056.1764690939"
-  },
-  {
-    "domain": ".yna.co.kr",
-    "expiry": 1798386941,
-    "httpOnly": false,
-    "name": "__gads",
-    "path": "/",
-    "sameSite": "None",
-    "secure": true,
-    "value": "ID=5aacae9ced0e3305:T=1764690941:RT=1764691505:S=ALNI_MbxEuobjzb02qnqPmaSXX6c3pgGUA"
-  },
-  {
-    "domain": ".yna.co.kr",
-    "expiry": 1799251504,
-    "httpOnly": false,
-    "name": "_ga_0KHX1TDH6Y",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": "GS2.1.s1764690939$o1$g1$t1764691504$j59$l0$h0"
-  },
-  {
-    "domain": ".yna.co.kr",
-    "expiry": 1780242941,
-    "httpOnly": false,
-    "name": "__eoi",
-    "path": "/",
-    "sameSite": "None",
-    "secure": true,
-    "value": "ID=899af2cdabf1207e:T=1764690941:RT=1764691505:S=AA-AfjYRXEolqwy72xfg2blmuTCO"
-  },
-  {
-    "domain": ".yna.co.kr",
-    "expiry": 1764716400,
-    "httpOnly": false,
-    "name": "easid",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": "b8d0551b39fe990f.1764690939.1.1764691505.1764690939"
-  },
-  {
-    "domain": ".yna.co.kr",
-    "expiry": 1764693302,
-    "httpOnly": false,
-    "name": "easses",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": "*"
-  },
-  {
-    "domain": ".yna.co.kr",
-    "expiry": 1799251504,
-    "httpOnly": false,
-    "name": "__yna_log_tid_info",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": "{\"tc\":{\"c\":1,\"e\":-1,\"ct\":1764690936710},\"tcd\":{\"c\":1,\"e\":\"20251203235959\"},\"tcw\":{\"c\":1,\"e\":\"20251213235959\"},\"tcm\":{\"c\":1,\"e\":\"20260131235959\"},\"ren\":{\"t\":0}}"
-  },
-  {
-    "domain": ".yna.co.kr",
-    "expiry": 1798386941,
+    "domain": ".eastietimes.com",
+    "expiry": 1798562514,
     "httpOnly": false,
     "name": "__gpi",
     "path": "/",
     "sameSite": "None",
     "secure": true,
-    "value": "UID=000012d144569da8:T=1764690941:RT=1764691505:S=ALNI_MYe-3T3MAKQMvWkuBtzUSCuvsSVMg"
+    "value": "UID=000012d1c7ca7183:T=1764866514:RT=1764866514:S=ALNI_MZ6ldDWq771YfR1fqWb1W-2Ln9r_w"
   },
   {
-    "domain": ".yna.co.kr",
-    "expiry": 1764693304,
+    "domain": ".eastietimes.com",
+    "expiry": 1799426515,
     "httpOnly": false,
-    "name": "__yna_log_tid",
+    "name": "_ga_FVLRT9EP8L",
     "path": "/",
     "sameSite": "Lax",
     "secure": false,
-    "value": "0.baafd87ec98fdd6d5ac474016b129a10-3"
+    "value": "GS2.1.s1764866513$o1$g1$t1764866515$j58$l0$h0"
   },
   {
-    "domain": ".yna.co.kr",
-    "expiry": 1799251504,
+    "domain": ".eastietimes.com",
+    "expiry": 1798562514,
     "httpOnly": false,
-    "name": "__yna_log_uuid",
+    "name": "__gads",
+    "path": "/",
+    "sameSite": "None",
+    "secure": true,
+    "value": "ID=296df45227e7fd4d:T=1764866514:RT=1764866514:S=ALNI_MbcGVtjO2AxgrpTIaSf39aF2KP-Xw"
+  },
+  {
+    "domain": ".eastietimes.com",
+    "expiry": 1780418514,
+    "httpOnly": false,
+    "name": "__eoi",
+    "path": "/",
+    "sameSite": "None",
+    "secure": true,
+    "value": "ID=b7bc30c88c5ebdf8:T=1764866514:RT=1764866514:S=AA-Afjb3EPT8TyeEnBUhKuOtTYph"
+  },
+  {
+    "domain": ".eastietimes.com",
+    "expiry": 1799426515,
+    "httpOnly": false,
+    "name": "_ga",
     "path": "/",
     "sameSite": "Lax",
     "secure": false,
-    "value": "f5d58845-0180-4499-8630-f41a7fcb306b-20251202"
+    "value": "GA1.1.999305583.1764866514"
   }
 ]
