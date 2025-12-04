@@ -1,6 +1,6 @@
 import pandas as pd
 from src.scraper import setup_driver, extract_article_data
-from src.utils import clean_text, detect_language, get_domain_type
+from src.utils import clean_text, detect_language, get_domain_type, extract_date_from_content
 from src.llm_processor import extract_fields_with_llm
 import logging
 import time
@@ -26,8 +26,22 @@ def main():
         langue = detect_language(contenu_clean)
         source_type = get_domain_type(url)
 
-        # Phase 2 : LLM
+        # Extraction de la date AVANT l'appel LLM
+        date_extracted = extract_date_from_content(
+            content=raw_data["contenu"],  # Utiliser contenu brut (pas nettoyé)
+            url=url
+        )
+        
+        # Si date trouvée dans métadonnées, privilégier celle-ci
+        if raw_data.get("date_meta"):
+            date_extracted = raw_data["date_meta"]
+
+        # Phase 2 : LLM (avec date pré-extraite)
         llm_fields = extract_fields_with_llm(contenu_clean, url)
+        
+        # Utiliser la date extraite si LLM n'en trouve pas
+        if llm_fields["date_publication"] == "inconnue":
+            llm_fields["date_publication"] = date_extracted
 
         # Compter caractères et mots
         nb_caracteres = len(contenu_clean)
@@ -53,11 +67,8 @@ def main():
         }
 
         results.append(final_row)
-
-        # Sauvegarde partielle (au cas où)
         pd.DataFrame(results).to_csv(OUTPUT_FILE, index=False)
-
-        time.sleep(1)  # Être gentil avec les serveurs
+        time.sleep(1)
 
     driver.quit()
     logging.info("✅ Scraping et traitement terminés.")
