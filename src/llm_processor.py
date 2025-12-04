@@ -14,20 +14,33 @@ Texte : {text[:3000]}
 
 Champs à extraire :
 - "date_publication" : Date au format JJ/MM/AAAA. Cherche des expressions comme "19 octobre 2023", "Oct 19, 2023", "2023-10-19". Si plusieurs dates, prends la plus proche du début du texte. Si aucune date, mets "inconnue".
-- "lieu" : Pays, région ou ville mentionné(e) (ex: "France", "Jura", "Berne"). Si aucun, mets "inconnu".
-- "maladie" : Nom exact de la maladie animale (ex: "Maladie hémorragique épizootique", "FCO", "Bluetongue"). Si aucune, mets "inconnue".
-- "animal" : Espèce animale concernée (ex: "Bovins", "Ovins", "Équidés"). Si aucune, mets "inconnu".
-- "resume_50_mots" : Résumé en environ 50 mots.
-- "resume_100_mots" : Résumé en environ 100 mots.
-- "resume_150_mots" : Résumé en environ 150 mots.
+
+- "lieu" : **IMPORTANT** - Identifie le PAYS PRINCIPAL où se déroule l'événement ou d'où provient l'information. 
+  * Si l'article parle d'un pays qui surveille/observe/réagit à une situation dans d'autres pays, le lieu est le PAYS QUI SURVEILLE.
+  * Exemples : 
+    - "Le Maroc surveille les cas en Europe" → lieu = "Maroc"
+    - "La France détecte des cas en Suisse" → lieu = "France"
+    - "Des cas détectés en Italie" → lieu = "Italie"
+  * Donne UNIQUEMENT le pays principal, pas la liste des pays mentionnés.
+  * Si aucun lieu clair, mets "inconnu".
+
+- "maladie" : Nom exact de la maladie animale (ex: "Maladie hémorragique épizootique", "FCO", "Bluetongue", "Grippe aviaire"). Si aucune, mets "inconnue".
+
+- "animal" : Espèce animale concernée (ex: "Bovins", "Ovins", "Équidés", "Volailles"). Si plusieurs espèces, liste-les séparées par des virgules. Si aucune, mets "inconnu".
+
+- "resume_50_mots" : Résumé en environ 50 mots maximum.
+
+- "resume_100_mots" : Résumé en environ 100 mots maximum.
+
+- "resume_150_mots" : Résumé en environ 150 mots maximum.
 
 Exemple de réponse attendue :
 {{
   "date_publication": "19/10/2023",
-  "lieu": "Suisse, Jura",
+  "lieu": "Maroc",
   "maladie": "Maladie hémorragique épizootique",
-  "animal": "Bovins",
-  "resume_50_mots": "...",
+  "animal": "Bovins, Ovins",
+  "resume_50_mots": "Le Maroc surveille l'apparition de la maladie hémorragique épizootique en Europe. L'ONSA met en place des contrôles stricts sur les importations d'animaux vivants pour prévenir l'introduction du virus au Maroc.",
   "resume_100_mots": "...",
   "resume_150_mots": "..."
 }}
@@ -40,9 +53,13 @@ Exemple de réponse attendue :
                 "model": "llama3.2",
                 "prompt": prompt,
                 "format": "json",
-                "stream": False
+                "stream": False,
+                "options": {
+                    "temperature": 0.3,  # Réduire la créativité pour plus de précision
+                    "top_p": 0.9
+                }
             },
-            timeout=90  # Augmenter timeout pour textes longs
+            timeout=90
         )
         if response.status_code == 200:
             result = response.json()
@@ -55,6 +72,13 @@ Exemple de réponse attendue :
                 if key not in output:
                     output[key] = "inconnu" if "resume" not in key else "Résumé non généré"
             
+            # Post-traitement du lieu : nettoyer les listes si présentes
+            lieu = output.get("lieu", "inconnu")
+            if isinstance(lieu, str) and "," in lieu:
+                # Prendre uniquement le premier pays mentionné
+                output["lieu"] = lieu.split(",")[0].strip()
+            
+            logging.info(f"✅ Extraction LLM réussie - Lieu: {output['lieu']}")
             return output
         else:
             logging.warning(f"Ollama error: {response.text}")

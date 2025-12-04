@@ -1,278 +1,52 @@
 [
   {
-    "domain": ".tridge.com",
-    "expiry": 1799448500,
+    "domain": ".eastietimes.com",
+    "expiry": 1798586217,
     "httpOnly": false,
-    "name": "_ga_MCG2HB5R4J",
+    "name": "__gpi",
+    "path": "/",
+    "sameSite": "None",
+    "secure": true,
+    "value": "UID=000012d1d3fb0c78:T=1764890217:RT=1764890217:S=ALNI_MYTVQ3faR2QRupyXgMuAhQ86SRnWw"
+  },
+  {
+    "domain": ".eastietimes.com",
+    "expiry": 1799450219,
+    "httpOnly": false,
+    "name": "_ga_FVLRT9EP8L",
     "path": "/",
     "sameSite": "Lax",
     "secure": false,
-    "value": "GS2.1.s1764888460$o1$g1$t1764888500$j20$l0$h0"
+    "value": "GS2.1.s1764890216$o1$g1$t1764890219$j57$l0$h0"
   },
   {
-    "domain": ".tridge.com",
-    "expiry": 1799448499,
+    "domain": ".eastietimes.com",
+    "expiry": 1798586217,
+    "httpOnly": false,
+    "name": "__gads",
+    "path": "/",
+    "sameSite": "None",
+    "secure": true,
+    "value": "ID=ea526644e72bde6d:T=1764890217:RT=1764890217:S=ALNI_MYwXQ8XWUTjVNPM545bdONFm-y5jQ"
+  },
+  {
+    "domain": ".eastietimes.com",
+    "expiry": 1780442217,
+    "httpOnly": false,
+    "name": "__eoi",
+    "path": "/",
+    "sameSite": "None",
+    "secure": true,
+    "value": "ID=5394d060b96c6e52:T=1764890217:RT=1764890217:S=AA-AfjbVZEbU1tPHlrmZTpQC9SCw"
+  },
+  {
+    "domain": ".eastietimes.com",
+    "expiry": 1799450219,
     "httpOnly": false,
     "name": "_ga",
     "path": "/",
     "sameSite": "Lax",
     "secure": false,
-    "value": "GA1.1.1533547047.1764888460"
-  },
-  {
-    "domain": "www.tridge.com",
-    "expiry": 1765147696,
-    "httpOnly": false,
-    "name": "guid",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": "962d8484-d8f5-5bd8-e471-94531d7ba8d7"
-  },
-  {
-    "domain": ".www.tridge.com",
-    "expiry": 1765147657,
-    "httpOnly": false,
-    "name": "sessionABType",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": true,
-    "value": "a"
-  },
-  {
-    "domain": "www.tridge.com",
-    "expiry": 1765147696,
-    "httpOnly": false,
-    "name": "sessionABType",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": "b"
-  },
-  {
-    "domain": "www.tridge.com",
-    "expiry": 1765147696,
-    "httpOnly": false,
-    "name": "geoIp",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": "%7B%22country%22%3A%22TN%22%2C%22timeZone%22%3A%22Africa%2FTunis%22%7D"
-  },
-  {
-    "domain": ".www.tridge.com",
-    "expiry": 1765147663,
-    "httpOnly": false,
-    "name": "isBot",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": true,
-    "value": "false"
-  },
-  {
-    "domain": ".tridge.com",
-    "expiry": 1796424499,
-    "httpOnly": false,
-    "name": "_hjSessionUser_1736196",
-    "path": "/",
-    "sameSite": "None",
-    "secure": true,
-    "value": "eyJpZCI6ImVjMDhlOTEyLTk4NGMtNTRhZS1hM2Y0LTdiMWRlZmI4YTYwNCIsImNyZWF0ZWQiOjE3NjQ4ODg0NjA3NDcsImV4aXN0aW5nIjp0cnVlfQ=="
-  },
-  {
-    "domain": ".www.tridge.com",
-    "expiry": 1796424500,
-    "httpOnly": false,
-    "name": "_zitok",
-    "path": "/",
-    "sameSite": "Strict",
-    "secure": true,
-    "value": "ea823d01373261255e141764888463"
-  },
-  {
-    "domain": ".www.tridge.com",
-    "expiry": 1765147663,
-    "httpOnly": false,
-    "name": "geoIp",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": true,
-    "value": "%7B%22country%22%3A%22TN%22%2C%22timeZone%22%3A%22Africa%2FTunis%22%7D"
-  },
-  {
-    "domain": ".www.tridge.com",
-    "expiry": 1796424463,
-    "httpOnly": false,
-    "name": "language",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": true,
-    "value": "en"
-  },
-  {
-    "domain": ".tridge.com",
-    "expiry": 1796338100,
-    "httpOnly": false,
-    "name": "csrftoken",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": "3Bg8e078t5CRloiP8U3nqKMWWFePfcOo3KaOucAInrqyyKWDEE2m8KhCBDFnDK6y"
-  },
-  {
-    "domain": ".tridge.com",
-    "expiry": 1796424461,
-    "httpOnly": false,
-    "name": "AMP_MKTG_257f6e771b",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": true,
-    "value": "JTdCJTdE"
-  },
-  {
-    "domain": ".tridge.com",
-    "expiry": 1764888521,
-    "httpOnly": false,
-    "name": "_gat",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": true,
-    "value": "1"
-  },
-  {
-    "domain": ".www.tridge.com",
-    "httpOnly": false,
-    "name": "tracking.landing_url",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": true,
-    "value": "https://www.tridge.com/news/bluetongue-is-coming"
-  },
-  {
-    "domain": ".tridge.com",
-    "expiry": 1772664460,
-    "httpOnly": false,
-    "name": "_gcl_au",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": "1.1.520142993.1764888460"
-  },
-  {
-    "domain": ".tridge.com",
-    "expiry": 1796424500,
-    "httpOnly": false,
-    "name": "AMP_257f6e771b",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": "JTdCJTIyZGV2aWNlSWQlMjIlM0ElMjJkNmI2Y2ZlZi00ZDM5LTRjNTYtOTI4Mi1lZTRhMTQ1ZTE5ODElMjIlMkMlMjJzZXNzaW9uSWQlMjIlM0ExNzY0ODg4NDYxNzQyJTJDJTIyb3B0T3V0JTIyJTNBZmFsc2UlMkMlMjJsYXN0RXZlbnRUaW1lJTIyJTNBMTc2NDg4ODUwMDM3MiUyQyUyMmxhc3RFdmVudElkJTIyJTNBMjUlMkMlMjJwYWdlQ291bnRlciUyMiUzQTAlN0Q="
-  },
-  {
-    "domain": "www.tridge.com",
-    "httpOnly": false,
-    "name": "tracking.http_referer",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": ""
-  },
-  {
-    "domain": "www.tridge.com",
-    "httpOnly": false,
-    "name": "tracking.landing_url",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": "https://www.tridge.com/news/bluetongue-officially-confirmed-in-germany"
-  },
-  {
-    "domain": "www.tridge.com",
-    "expiry": 1796424496,
-    "httpOnly": false,
-    "name": "language",
-    "path": "/",
-    "sameSite": "Strict",
-    "secure": false,
-    "value": "en"
-  },
-  {
-    "domain": ".www.tridge.com",
-    "httpOnly": false,
-    "name": "tracking.http_referer",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": true,
-    "value": ""
-  },
-  {
-    "domain": ".tridge.com",
-    "expiry": 1772664499,
-    "httpOnly": false,
-    "name": "_fbp",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": "fb.1.1764888460799.262646738610084774"
-  },
-  {
-    "domain": ".www.tridge.com",
-    "expiry": 1765147657,
-    "httpOnly": false,
-    "name": "guid",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": true,
-    "value": "1885f026-4326-806c-c3b5-bccace18869e"
-  },
-  {
-    "domain": ".tridge.com",
-    "expiry": 1764890260,
-    "httpOnly": false,
-    "name": "_hjSession_1736196",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": true,
-    "value": "eyJpZCI6ImFkYTg0M2VkLTNmYTEtNGI5ZC05NWVmLTQ2NmFhY2ZmZjg1YyIsImMiOjE3NjQ4ODg0NjA3NDgsInMiOjAsInIiOjAsInNiIjowLCJzciI6MCwic2UiOjAsImZzIjoxLCJzcCI6MX0="
-  },
-  {
-    "domain": ".www.tridge.com",
-    "expiry": 1764890260,
-    "httpOnly": false,
-    "name": "cwr_s",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": true,
-    "value": "eyJzZXNzaW9uSWQiOiI4YjAwYTQ3Yy03MWQyLTRjOWYtODBmZC0xMzNjN2U2NDUxNzMiLCJyZWNvcmQiOmZhbHNlLCJldmVudENvdW50IjowLCJwYWdlIjp7InBhZ2VJZCI6Ii9uZXdzL2JsdWV0b25ndWUtaXMtY29taW5nIiwiaW50ZXJhY3Rpb24iOjAsInJlZmVycmVyIjoiIiwicmVmZXJyZXJEb21haW4iOiIiLCJzdGFydCI6MTc2NDg4ODQ2MDM2MH19"
-  },
-  {
-    "domain": ".tridge.com",
-    "expiry": 1764974899,
-    "httpOnly": false,
-    "name": "_gid",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": "GA1.2.810002114.1764888460"
-  },
-  {
-    "domain": "www.tridge.com",
-    "expiry": 1765147696,
-    "httpOnly": false,
-    "name": "isBot",
-    "path": "/",
-    "sameSite": "Lax",
-    "secure": false,
-    "value": "false"
-  },
-  {
-    "domain": ".www.tridge.com",
-    "expiry": 1767480499,
-    "httpOnly": false,
-    "name": "cwr_u",
-    "path": "/",
-    "sameSite": "Strict",
-    "secure": true,
-    "value": "5b090c2d-a702-4d92-a07e-3438545d6ef7"
+    "value": "GA1.1.2035036680.1764890217"
   }
 ]
