@@ -45,21 +45,78 @@ def detect_language(text: str) -> str:
         return "unknown"
 
 def get_domain_type(url: str) -> str:
-    """Détermine le type de source"""
-    if not url:
-        return "médias"
+    """
+    Détermine le type de source en fonction de l'URL.
     
-    url_lower = url.lower()
+    Args:
+        url: L'URL à analyser
+        
+    Returns:
+        str: Type de source parmi:
+            - "site officiel" (WAHIS, gouvernements, organisations internationales)
+            - "média spécialisé" (publications agricoles/vétérinaires)
+            - "média généraliste" (presse, agences)
+            - "plateforme commerciale" (Tridge, etc.)
+            - "source inconnue" (si URL vide ou non classifiable)
+    """
+    if not url or not isinstance(url, str):
+        return "source inconnue"
     
-    # Sites officiels
-    if any(site in url_lower for site in ['wahis', 'woah', 'who.int', 'fao.org', 'oie.int']):
+    url_lower = url.lower().strip()
+    
+    # Gérer les URLs vides après strip
+    if not url_lower:
+        return "source inconnue"
+    
+    # Extraire le domaine principal
+    try:
+        parsed = urlparse(url_lower)
+        domain = parsed.netloc or parsed.path.split('/')[0]
+    except Exception:
+        domain = url_lower
+    
+    # Sites officiels internationaux (WOAH/OIE)
+    official_intl = ['wahis.woah.org', 'woah.org', 'oie.int', 'who.int', 
+                     'fao.org', 'cdc.gov', 'ecdc.europa.eu']
+    if any(site in domain for site in official_intl):
         return "site officiel"
     
-    # Sites gouvernementaux
-    if any(ext in url_lower for ext in ['.gov', '.gouv', '.gob']):
+    # Extensions gouvernementales
+    gov_extensions = ['.gov', '.gouv.', '.gob.', '.go.kr', '.gov.', 
+                      'sana.sy', 'government', 'daera']
+    if any(ext in domain for ext in gov_extensions):
         return "site officiel"
     
-    return "médias"
+    # Médias spécialisés agricoles/vétérinaires
+    specialized_media = ['agriland.ie', 'equusmagazine.com', 'equimanagement.com',
+                        'thehorse.com', 'agraragazat', 'agrodiario', 'farmersjournal',
+                        'agweb', 'farmpress', 'drovers', 'beefmagazine']
+    if any(site in domain for site in specialized_media):
+        return "média spécialisé"
+    
+    # Plateformes commerciales
+    commercial = ['tridge.com', 'agribusiness', 'agrimarket']
+    if any(site in domain for site in commercial):
+        return "plateforme commerciale"
+    
+    # Agences de presse et médias généralistes
+    news_agencies = ['yna.co.kr', 'reuters', 'afp', 'ap.org', 'dpa', 'efe.com']
+    general_media = ['elfagr.org', 'alyaum.com', 'aden-tm.net', 'woodtv.com',
+                    'nouvelles-du-monde', 'news', 'press', 'journal']
+    
+    if any(agency in domain for agency in news_agencies + general_media):
+        return "média généraliste"
+    
+    # Raccourcisseurs d'URL (nécessitent une redirection)
+    if any(shortener in domain for shortener in ['lc.cx', 'bit.ly', 't.co', 'tinyurl']):
+        return "lien raccourci"
+    
+    # Sites d'archives
+    if 'archive' in domain:
+        return "archive"
+    
+    # Par défaut
+    return "média généraliste"
 
 def extract_date_from_content(content: str, url: str = None) -> str:
     """
