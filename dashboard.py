@@ -11,7 +11,7 @@ from pathlib import Path
 # ============================================
 
 # Chemins des fichiers
-OUTPUT_FILE = "data/output/output_dataset.csv"
+OUTPUT_FILE = "data/output/dataset_nettoye.csv"
 
 # ============================================
 # CHARGEMENT ET NETTOYAGE DES DONNÉES
