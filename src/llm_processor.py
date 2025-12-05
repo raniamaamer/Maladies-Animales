@@ -10,7 +10,7 @@ def extract_fields_with_llm(text: str, url: str) -> dict:
 Tu es un expert en épidémiologie vétérinaire. Extrais les informations suivantes du texte.
 Réponds UNIQUEMENT en JSON valide, sans explication ni texte supplémentaire.
 
-Texte : {text[:3000]}
+Texte : {text[:3500]}
 
 Champs à extraire :
 - "date_publication" : Date au format JJ/MM/AAAA. Cherche des expressions comme "19 octobre 2023", "Oct 19, 2023", "2023-10-19". Si plusieurs dates, prends la plus proche du début du texte. Si aucune date, mets "inconnue".
@@ -24,26 +24,41 @@ Champs à extraire :
   * Donne UNIQUEMENT le pays principal, pas la liste des pays mentionnés.
   * Si aucun lieu clair, mets "inconnu".
 
-- "maladie" : Nom exact de la maladie animale (ex: "Maladie hémorragique épizootique", "FCO", "Bluetongue", "Grippe aviaire"). Si aucune, mets "inconnue".
+- "maladie" : **CRITIQUE** - Identifie la maladie animale EXACTEMENT telle que mentionnée dans le texte.
+  * RÈGLES STRICTES :
+    - "Bluetongue" = "Bluetongue" (OU "Fièvre catarrhale ovine" si mentionné en français)
+    - "African swine fever" = "Peste porcine africaine"
+    - "Avian influenza" / "Bird flu" = "Grippe aviaire"
+    - "Epizootic hemorrhagic disease" / "EHD" = "Maladie hémorragique épizootique"
+    - "Foot and mouth disease" / "FMD" = "Fièvre aphteuse"
+    - "Lumpy skin disease" = "Dermatose nodulaire contagieuse"
+  * NE PAS confondre les maladies ! Lis attentivement le texte pour identifier la bonne maladie.
+  * Vérifie que le nom de la maladie apparaît bien dans le texte avant de le retourner.
+  * Si le texte parle de "bluetongue virus" ou "BTV", la maladie est "Bluetongue", PAS "Maladie hémorragique épizootique".
+  * Si aucune maladie n'est clairement identifiée, mets "inconnue".
 
-- "animal" : Espèce animale concernée (ex: "Bovins", "Ovins", "Équidés", "Volailles"). Si plusieurs espèces, liste-les séparées par des virgules. Si aucune, mets "inconnu".
+- "animal" : Espèce animale concernée (ex: "Bovins", "Ovins", "Équidés", "Volailles", "Porcins"). 
+  * Si plusieurs espèces, liste-les séparées par des virgules (ex: "Bovins, Ovins").
+  * Si aucune espèce n'est mentionnée, mets "inconnu".
 
-- "resume_50_mots" : Résumé en environ 50 mots maximum.
+- "resume_50_mots" : Résumé factuel en environ 50 mots maximum. Mentionne la maladie, le lieu et les animaux concernés.
 
-- "resume_100_mots" : Résumé en environ 100 mots maximum.
+- "resume_100_mots" : Résumé détaillé en environ 100 mots maximum. Inclus le contexte et les mesures prises.
 
-- "resume_150_mots" : Résumé en environ 150 mots maximum.
+- "resume_150_mots" : Résumé complet en environ 150 mots maximum. Ajoute l'historique et les impacts économiques si mentionnés.
 
 Exemple de réponse attendue :
 {{
-  "date_publication": "19/10/2023",
-  "lieu": "Maroc",
-  "maladie": "Maladie hémorragique épizootique",
-  "animal": "Bovins, Ovins",
-  "resume_50_mots": "Le Maroc surveille l'apparition de la maladie hémorragique épizootique en Europe. L'ONSA met en place des contrôles stricts sur les importations d'animaux vivants pour prévenir l'introduction du virus au Maroc.",
+  "date_publication": "16/10/2023",
+  "lieu": "Allemagne",
+  "maladie": "Bluetongue",
+  "animal": "Ovins, Bovins",
+  "resume_50_mots": "Le virus de la fièvre catarrhale ovine (Bluetongue) a été détecté en Allemagne après les Pays-Bas et la Belgique. Un mouton d'une ferme près de la frontière néerlandaise a été diagnostiqué positif, entraînant une quarantaine.",
   "resume_100_mots": "...",
   "resume_150_mots": "..."
 }}
+
+RAPPEL IMPORTANT : Vérifie bien que la maladie identifiée correspond aux symptômes et au virus mentionnés dans le texte !
 """
 
     try:
@@ -55,11 +70,12 @@ Exemple de réponse attendue :
                 "format": "json",
                 "stream": False,
                 "options": {
-                    "temperature": 0.3,  # Réduire la créativité pour plus de précision
-                    "top_p": 0.9
+                    "temperature": 0.1,  # Encore plus bas pour la précision
+                    "top_p": 0.8,
+                    "num_predict": 1000  # Augmenter pour les résumés
                 }
             },
-            timeout=90
+            timeout=120
         )
         if response.status_code == 200:
             result = response.json()
@@ -75,10 +91,14 @@ Exemple de réponse attendue :
             # Post-traitement du lieu : nettoyer les listes si présentes
             lieu = output.get("lieu", "inconnu")
             if isinstance(lieu, str) and "," in lieu:
-                # Prendre uniquement le premier pays mentionné
                 output["lieu"] = lieu.split(",")[0].strip()
             
-            logging.info(f"✅ Extraction LLM réussie - Lieu: {output['lieu']}")
+            # Validation de la maladie : vérifier qu'elle n'est pas vide ou générique
+            maladie = output.get("maladie", "").strip()
+            if not maladie or len(maladie) < 3 or maladie.lower() in ["disease", "virus", "infection"]:
+                output["maladie"] = "inconnue"
+            
+            logging.info(f"✅ Extraction LLM réussie - Lieu: {output['lieu']}, Maladie: {output['maladie']}")
             return output
         else:
             logging.warning(f"Ollama error: {response.text}")
