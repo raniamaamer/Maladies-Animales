@@ -1,110 +1,143 @@
-# 🐾 Projet Web Scraping - Maladies Animales
+# 🐾 Maladies Animales
 
-Système automatisé d'extraction et d'analyse d'articles sur les maladies animales avec Selenium, ScrapingBee et LLM.
+> Système automatisé d'extraction et d'analyse d'articles sur les maladies animales avec IA locale
+
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Selenium](https://img.shields.io/badge/Selenium-4.15.2-green.svg)](https://selenium-python.readthedocs.io/)
+
+---
 
 ## 📋 Description
 
-Ce projet extrait automatiquement des informations à partir d'URLs d'articles sur les maladies animales et génère un dataset CSV structuré avec :
-- Métadonnées (titre, langue, dates, lieux)
-- Analyse de contenu (maladie, animal concerné)
-- Résumés automatiques (50, 100, 150 mots)
-- Gestion des sites protégés (Cloudflare, WAHIS, etc.)
+Ce projet extrait automatiquement des informations à partir d'articles web sur les maladies animales et génère un dataset CSV enrichi avec :
+
+- 🔍 **Scraping intelligent** : Gère les sites protégés (Cloudflare, WAHIS)
+- 🤖 **IA locale (LLM)** : Extraction automatique des métadonnées
+- 🌍 **Multilingue** : Détection automatique de la langue
+- 📊 **Dashboard interactif** : Visualisation avec Dash/Plotly
+- 💾 **Export structuré** : CSV prêt pour analyse
+
+---
+
+## 📚 Technologies Utilisées
+
+| Logo | Technologie | Version | Description |
+|------|-------------|---------|-------------|
+| ![Selenium](https://img.shields.io/badge/Selenium-43B02A?style=for-the-badge&logo=selenium&logoColor=white&height=20.5) | **Selenium** | 4.15.2 | Automatisation de navigateur pour le scraping web dynamique. Contrôle Chrome/Firefox pour accéder aux sites JavaScript. |
+| ![ScrapingBee](https://img.shields.io/badge/ScrapingBee-FFB800?style=for-the-badge&logo=databricks&logoColor=black&height=40)| **ScrapingBee** | API | Service cloud de scraping pour contourner Cloudflare et protections anti-bot. 1000 crédits gratuits. |
+| ![BeautifulSoup](https://img.shields.io/badge/BeautifulSoup-3776AB?style=for-the-badge&logo=python&logoColor=white&height=20.5) | **BeautifulSoup4** | 4.12.2 | Parser HTML/XML pour extraire données structurées. Simplifie la navigation dans l'arbre DOM. |
+| ![lxml](https://img.shields.io/badge/lxml-8A2BE2?style=for-the-badge&logo=xml&logoColor=white&height=20) | **lxml** | 5.0+ | Parser HTML/XML ultra-rapide en C. Utilisé en backend par BeautifulSoup pour accélérer le parsing. |
+| ![Ollama](https://img.shields.io/badge/Ollama-000000?style=for-the-badge&logo=llama&logoColor=white&height=20.5) | **Ollama** | - | Runtime local pour LLM (Llama 3.2). Extraction intelligente de métadonnées sans API externe. |
+| ![Dash](https://img.shields.io/badge/Dash-008DE4?style=for-the-badge&logo=plotly&logoColor=white&height=20.5) | **Dash** | 2.14.2 | Framework web par Plotly pour créer des dashboards interactifs en Python. Aucun JavaScript requis. |
+| ![Plotly](https://img.shields.io/badge/Plotly-3F4F75?style=for-the-badge&logo=plotly&logoColor=white&height=20.5) | **Plotly** | 5.18.0 | Bibliothèque de visualisation interactive (graphiques dynamiques, zoom, export). Moteur graphique de Dash. |
+| ![tqdm](https://img.shields.io/badge/tqdm-FFC107?style=for-the-badge&logo=progress&logoColor=black&height=20.5) | **tqdm** | 4.66+ | Barres de progression élégantes pour loops. Affiche ETA, vitesse, et pourcentage en temps réel. |
+
+### 🔧 Dépendances Complémentaires
+
+| Logo | Package | Version | Rôle |
+|------|---------|---------|------|
+| ![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white&height=20.5) | **pandas** | 2.1.3 | Manipulation et export CSV/Excel |
+| ![Langdetect](https://img.shields.io/badge/Langdetect-4B8BBE?style=for-the-badge&logo=google-translate&logoColor=white&height=20.5) | **langdetect** | 1.0.9 | Détection automatique de langue (15+ langues) |
+| ![Requests](https://img.shields.io/badge/Requests-FF6C37?style=for-the-badge&logo=python&logoColor=white&height=20.5) | **requests** | 2.31.0 | Requêtes HTTP pour APIs |
+| ![WebDriver Manager](https://img.shields.io/badge/WebDriver_Manager-00ADD8?style=for-the-badge&logo=googlechrome&logoColor=white&height=20.5) | **webdriver-manager** | 4.0+ | Gestion automatique des drivers Selenium |
+---
+
+## 🎯 Fonctionnalités
+
+| Fonctionnalité | Description |
+|----------------|-------------|
+| **Scraping adaptatif** | Selenium + ScrapingBee pour sites protégés |
+| **Extraction LLM** | Date, lieu, maladie, animal, résumés (50/100/150 mots) |
+| **Détection langue** | 🇫🇷 🇸🇦 🇬🇧 🇪🇸 🇷🇺 et plus |
+| **Classification source** | Site officiel, média spécialisé, presse |
+| **Dashboard** | Graphiques interactifs et filtres dynamiques |
+| **Logs détaillés** | Suivi en temps réel du traitement |
+
+---
 
 ## 🏗️ Architecture
 
 ```
-animal_disease_scraper/
-├── data/
-│   ├── input/           # Fichier URLs d'entrée (urls.csv)
-│   ├── output/          # Résultats (output_dataset.csv)
-│   └── logs/            # Logs d'exécution (scraping.log)
-├── src/
-│   ├── scraper.py       # Module Selenium + ScrapingBee
-│   ├── llm_processor.py # Module LLM (extraction métadonnées résumés)
-│   └── utils.py         # Utilitaires (nettoyage, détection langue)
-│         
-└── main.py              # Script principal
+maladies-animales-scraper/
+├── 📁 data/
+│   ├── input/           # 📥 urls.csv (fichier d'entrée)
+│   ├── output/          # 📤 dataset.csv (résultats)
+│   └── logs/            # 📝 scraping.log
+├── 📁 src/
+│   ├── scraper.py       # 🕷️ Selenium + ScrapingBee
+│   ├── llm_processor.py # 🤖 Extraction LLM (Ollama)
+│   └── utils.py         # 🛠️ Nettoyage, détection langue
+├── main.py              # 🚀 Script principal
+├── dashboard.py         # 📊 Interface de visualisation
+├── test.py              # 🧪 Tests d'installation
+└── requirements.txt     # 📦 Dépendances
 ```
 
-## 🚀 Installation
+---
 
-### 1. Prérequis
+## 🚀 Installation Rapide
+
+### 1️⃣ Prérequis
+
+- **Python 3.9+** : [Télécharger](https://www.python.org/downloads/)
+- **Google Chrome** : [Télécharger](https://www.google.com/chrome/)
+- **Ollama** : [Télécharger](https://ollama.com/download)
+
+### 2️⃣ Installation
+
 ```bash
-# Python 3.8+
-python --version
+# Cloner le projet
+git clone https://github.com/votre-repo/maladies-animales-scraper.git
+cd maladies-animales-scraper
 
-# Chrome/Chromium installé sur votre système
-google-chrome --version  # ou chromium --version
-```
-
-### 2. Installation des dépendances
-```bash
+# Installer les dépendances
 pip install -r requirements.txt
+
+# Télécharger le modèle LLM (Llama 3.2)
+ollama pull llama3.2
+
+# Tester l'installation
+python test.py
 ```
 
-**Dépendances principales :**
-```txt
-selenium==4.15.2
-webdriver-manager==4.0.1
-beautifulsoup4==4.12.2
-lxml==4.9.3
-pandas==2.1.3
-numpy==1.26.2
-langdetect==1.0.9
-ollama==0.1.6
-requests==2.31.0
-tenacity==8.2.3
+### 3️⃣ Configuration ScrapingBee (Sites Protégés)
 
-```
-
-### 3. Installation d'Ollama (LLM local gratuit)
-
-**Windows:**
-- Télécharger depuis https://ollama.com/download
-- Installer et exécuter
-- Ouvrir terminal: `ollama pull llama3.2`
-
-**Vérifier l'installation:**
-```bash
-ollama list
-# Doit afficher : llama3.2:latest
-```
-
-### 4. Configuration ScrapingBee (pour sites protégés)
-
-**⚠️ IMPORTANT : Clé API à configurer**
-
-1. Créer un compte sur https://www.scrapingbee.com (1000 crédits gratuits)
+1. Créer un compte sur [ScrapingBee](https://www.scrapingbee.com) (1000 crédits gratuits)
 2. Récupérer votre API key
-3. Dans `src/scraper.py`, ligne 8, remplacer :
+3. Dans `src/scraper.py`, ligne 8 :
+
 ```python
-SCRAPINGBEE_API_KEY = "VOTRE_CLE_API_ICI"
+SCRAPINGBEE_API_KEY = "VOTRE_CLE_ICI"
 ```
 
-**🔒 Sécurité :** Après vos tests, **révoquez cette clé** depuis le dashboard ScrapingBee.
+⚠️ **Important** : Révoquez la clé après vos tests depuis le [dashboard ScrapingBee](https://www.scrapingbee.com/dashboard)
+
+---
 
 ## 📊 Préparation des Données
 
 ### Format du fichier d'entrée
 
-Créez `data/input/urls.csv` avec le format suivant :
+Créez `data/input/urls.csv` :
 
 ```csv
-code,url
-code151 https://lc.cx/nKVbsM
-code152 https://lc.cx/sXWRhi
-code153 https://lc.cx/JSB3wp
+code,lien
+code151,https://lc.cx/nKVbsM
+code173,https://wahis.woah.org/#/in-review/5293
+code195,https://www.aden-tm.net/news/263310
 ```
 
-**Colonnes obligatoires:**
-- `code` : Identifiant unique (alphanumérique)
+**Colonnes obligatoires :**
+- `code` : Identifiant unique (ex: code151)
 - `url` : URL de l'article
 
 **Formats acceptés :**
-- Délimiteurs : `,` ou `;` ou `\t` (auto-détecté)
+- Délimiteurs : `,` `;` `\t` (auto-détecté)
 - Encodage : UTF-8
 
-## 🎯 Utilisation
+---
+
+## 🎮 Utilisation
 
 ### Lancement du scraping complet
 
@@ -112,480 +145,333 @@ code153 https://lc.cx/JSB3wp
 python main.py
 ```
 
-Le script va automatiquement :
-1. ✅ Charger le fichier `data/input/urls.csv`
-2. 🔍 Scraper chaque URL (avec gestion des sites protégés)
-3. 🧹 Nettoyer et analyser le contenu
-4. 🤖 Extraire les métadonnées avec le LLM
-5. 💾 Sauvegarder les résultats dans `data/output/output_dataset.csv`
+**Ce qui se passe :**
 
-### Suivi en temps réel
+```
+[1/50] Traitement [code001]
+URL: https://wahis.woah.org/#/in-review/5294
+============================================================
+🔒 Site protégé détecté
+📡 Appel ScrapingBee...
+✅ Contenu récupéré (1847 caractères)
+🌍 Langue détectée: français
+🤖 Extraction LLM en cours...
+   ✓ Maladie: Bluetongue
+   ✓ Animal: Ovins
+   ✓ Lieu: Belgique
+   ✓ Date: 16/10/2023
+📝 Résumés générés (50/100/150 mots)
+💾 Sauvegarde...
+============================================================
+✅ Traité avec succès en 28 secondes
+```
+
+### Visualiser le dashboard
 
 ```bash
-# Dans un autre terminal
-tail -f data/logs/scraping.log
+python dashboard.py
 ```
 
-### Configuration de la vitesse LLM
+Accès :
+- 🖥️ **PC** : http://127.0.0.1:8050/
+- 📱 **Mobile** : http://VOTRE-IP-LOCALE:8050/
 
-Dans `main.py`, ligne 10 :
+---
 
-```python
-LLM_MODE = "fast"   # ⚡ Rapide : ~10 sec/article (recommandé)
-# ou
-LLM_MODE = "normal" # 🎯 Précis : ~30 sec/article
-```
+## 📤 Fichier de Sortie
 
-## 📊 Flux d'Exécution
-
-```
-main.py
-   │
-   ├─→ 1. Chargement CSV (auto-détection délimiteur)
-   │      └─→ Détection colonnes code/url
-   │
-   ├─→ 2. Initialisation Selenium
-   │
-   ├─→ 3. Pour chaque URL :
-   │      │
-   │      ├─→ Détection site protégé ?
-   │      │   ├─→ OUI → ScrapingBee (API)
-   │      │   └─→ NON → Selenium direct
-   │      │
-   │      ├─→ Extraction contenu (titre + texte)
-   │      │
-   │      ├─→ Validation contenu
-   │      │   └─→ Si échec → 2ème tentative
-   │      │
-   │      ├─→ Nettoyage texte (utils.py)
-   │      │
-   │      ├─→ Détection langue
-   │      │
-   │      ├─→ Analyse LLM :
-   │      │   ├─→ Extraction métadonnées (date, lieu, maladie, animal)
-   │      │   └─→ Génération résumés (50/100/150 mots)
-   │      │
-   │      └─→ Sauvegarde ligne dans CSV
-   │
-   └─→ 4. Rapport final
-```
-
-## 📝 Fichiers de Sortie
-
-### `data/output/output_dataset.csv`
-
-Dataset final avec toutes les colonnes :
+### `data/output/dataset.csv`
 
 | Colonne | Description | Exemple |
 |---------|-------------|---------|
-| `code` | Identifiant unique | code152 |
+| `code` | Identifiant unique | code151 |
 | `url` | URL source | https://... |
-| `titre` | Titre de l'article | "Alerte grippe aviaire" |
-| `contenu` | Texte complet nettoyé | "Un foyer de grippe..." |
-| `langue` | Langue détectée | français / arabic / english |
-| `nb_caracteres` | Nombre de caractères | 2847 |
-| `nb_mots` | Nombre de mots | 421 |
-| `date_publication` | Date extraite | 15-03-2024 |
-| `lieu` | Pays/région | France |
-| `maladie` | Maladie identifiée | grippe aviaire |
-| `animal` | Espèce concernée | poulets |
-| `source_publication` | Type de source | site officiel / presse |
-| `resume_50_mots` | Résumé court | ... |
-| `resume_100_mots` | Résumé moyen | ... |
-| `resume_150_mots` | Résumé détaillé | ... |
+| `titre` | Titre de l'article | "Le virus de la fièvre catarrhale a été détecté en Europe" |
+| `contenu` | Texte complet nettoyé | "Tridge LogoPlateforme de trading mondiale." (3891 caractères) |
+| `langue` | Langue détectée | anglais |
+| `nb_caracteres` | Nombre de caractères | 3891 |
+| `nb_mots` | Nombre de mots | 617 |
+| `date_publication` | Date extraite | 16/10/2023 |
+| `lieu` | Pays/région | Belgique |
+| `maladie` | Maladie identifiée | Bluetongue |
+| `animal` | Espèce concernée | Ovins, Bovins |
+| `source_publication` | Type de source | lien raccourci |
+| `resume_50_mots` | Résumé court | "Le virus de la fièvre catarrhale ovine (Bluetongue)..." |
+| `resume_100_mots` | Résumé moyen | "Le virus de la fièvre catarrhale ovine (Bluetongue)..." |
+| `resume_150_mots` | Résumé détaillé | "Le virus de la fièvre catarrhale ovine (Bluetongue)..." |
+
+---
 
 ## ⚙️ Configuration Avancée
 
-### 1. Modifier les sites protégés
+### Modifier la vitesse de traitement
 
-Dans `src/scraper.py`, ligne 145 :
-
-```python
-PROTECTED_DOMAINS = [
-    "wahis.woah.org",
-    "alyaum.com",
-    "elfagr.org"
-]
-```
-
-### 2. Changer le modèle LLM
-
-Dans `src/llm_processor.py`, ligne 5 :
+Dans `src/llm_processor.py`, ligne 30 :
 
 ```python
-MODEL = "llama3.2"      # Recommandé (équilibre vitesse/qualité)
+"options": {
+    "temperature": 0.1,    # Plus bas = plus précis
+    "num_predict": 1000    # Augmenter pour résumés longs
+}
 ```
 
-### 3. Ajuster les timeouts Selenium
+### Ajouter un site protégé
 
-Dans `src/scraper.py`, ligne 161 :
+Dans `src/scraper.py`, ligne 15 :
 
 ```python
-WebDriverWait(driver, 15).until(...)  # Changer 15 → 20 pour sites lents
-time.sleep(3)  # Augmenter à 5 si nécessaire
+CLOUDFLARE_DOMAINS = {
+    "www.elfagr.org",
+    "www.alyaum.com",
+    "votre-site.com"  # ← Ajouter ici
+}
 ```
 
-### 4. Utiliser un proxy
+### Changer le modèle LLM
 
-Dans `src/scraper.py`, fonction `setup_driver()` :
+```bash
+# Modèle plus rapide
+ollama pull llama3.2:1b
 
-```python
-options.add_argument('--proxy-server=http://votre-proxy:port')
+# Dans src/llm_processor.py, ligne 18
+"model": "llama3.2:1b"
 ```
+
+---
 
 ## 🔧 Résolution de Problèmes
 
-### ❌ Erreur : "ChromeDriver not found"
+<details>
+<summary><b>❌ Erreur : "ChromeDriver not found"</b></summary>
 
 **Solution :**
 ```bash
 pip install --upgrade webdriver-manager
 ```
-
 Le script télécharge automatiquement ChromeDriver au premier lancement.
+</details>
 
----
+<details>
+<summary><b>❌ Erreur : "Ollama connection refused"</b></summary>
 
-### ❌ Erreur : "Ollama connection refused"
-
-**Solution :**
+**Vérifications :**
 ```bash
 # Démarrer Ollama
 ollama serve
 
-# Dans un autre terminal, vérifier
+# Tester
 ollama list
 ollama run llama3.2 "test"
 ```
+</details>
 
----
-
-### ❌ Contenu vide ou "Titre non trouvé"
+<details>
+<summary><b>❌ Contenu vide ou "Titre non trouvé"</b></summary>
 
 **Causes possibles :**
 
-1. **Site protégé par Cloudflare/Captcha**
-   - Vérifiez que ScrapingBee est configuré
-   - Ajoutez le domaine dans `PROTECTED_DOMAINS`
+1. **Site protégé** → Vérifiez ScrapingBee
+2. **Site lent** → Augmentez timeout dans `scraper.py` ligne 161
+3. **Structure HTML complexe** → Testez en mode non-headless
 
-2. **Site trop lent à charger**
-   - Augmentez le timeout dans `scraper.py` (ligne 161)
-   - Augmentez `time.sleep(3)` → `time.sleep(5)`
+**Debug mode (voir navigateur) :**
+```python
+# Dans src/scraper.py, ligne 13, commenter :
+# options.add_argument("--headless")
+```
+</details>
 
-3. **Structure HTML non reconnue**
-   - Testez en mode non-headless : `options.add_argument("--headless")` → commentez cette ligne
-   - Vérifiez les sélecteurs CSS dans `scraper.py`
-
----
-
-### ❌ Erreur ScrapingBee : "Incorrect API key"
-
-**Solution :**
-1. Vérifiez votre clé sur https://www.scrapingbee.com/dashboard
-2. Vérifiez qu'il n'y a pas d'espaces avant/après la clé
-3. Vérifiez que vous avez encore des crédits
-
----
-
-### ❌ Langue non détectée (affiche "inconnu")
-
-**Solution :**
-- Le texte doit contenir au moins 10 caractères
-- Pour l'arabe, vérifiez l'encodage UTF-8 du fichier
-- Installez la dernière version : `pip install --upgrade langdetect`
-
----
-
-### ❌ LLM trop lent (> 1 minute par article)
+<details>
+<summary><b>❌ LLM trop lent (> 1 minute/article)</b></summary>
 
 **Solutions :**
 
-1. **Activer le mode fast** (main.py ligne 10)
-   ```python
-   LLM_MODE = "fast"
-   ```
+1. **Modèle plus rapide :**
+```bash
+ollama pull llama3.2:1b
+```
 
-2. **Utiliser un modèle plus petit**
-   ```bash
-   ollama pull llama3.2:1b
-   ```
-   Puis dans `llm_processor.py` :
-   ```python
-   MODEL = "llama3.2:1b"
-   ```
-
-3. **Vérifier l'utilisation GPU**
-   ```bash
-   ollama ps  # Doit afficher GPU si disponible
-   ```
-
-4. **Réduire le contexte** (llm_processor.py ligne 39)
-   ```python
-   text_sample = text[:1000]  # Au lieu de 1500
-   ```
-
----
-
-### ❌ CSV mal formaté ou caractères étranges
-
-**Solution :**
+2. **Réduire le contexte** (llm_processor.py ligne 14) :
 ```python
-# Dans main.py, forcer l'encodage UTF-8
-df.to_csv(OUTPUT_FILE, index=False, encoding='utf-8-sig')
+text[:1000]  # Au lieu de 3500
 ```
 
-## 🎨 Personnalisation
-
-### Ajouter un nouveau champ LLM
-
-**1. Modifier le prompt** dans `src/llm_processor.py` ligne 39 :
-
-```python
-prompt = f"""... extrais les informations :
-- "date_publication"
-- "lieu"
-- "maladie"
-- "animal"
-- "nombre_cas"  # ← Nouveau champ
-...
-"""
+3. **Vérifier GPU :**
+```bash
+ollama ps  # Doit afficher GPU
 ```
+</details>
 
-**2. Ajouter le champ par défaut** ligne 62 :
+<details>
+<summary><b>❌ Erreur ScrapingBee : "Incorrect API key"</b></summary>
 
-```python
-return {
-    ...,
-    "nombre_cas": data.get("nombre_cas", "inconnu")
-}
-```
-
-**3. Mettre à jour main.py** ligne 190 :
-
-```python
-final_row = {
-    ...,
-    "nombre_cas": llm_fields.get("nombre_cas", "inconnu")
-}
-```
-
-### Changer le format de date
-
-Dans `src/llm_processor.py`, prompt ligne 42 :
-
-```python
-- "date_publication" (format YYYY-MM-DD, "inconnue" si absente)
-```
-
-## 📊 Exemples de Résultats
-
-### Exemple 1 : Site standard (succès)
-
-**Input :**
-```csv
-code123,https://example.com/article-grippe-aviaire
-```
-
-**Output :**
-```csv
-code123,https://example.com/article-grippe-aviaire,"Foyer de grippe aviaire détecté","Un nouveau foyer...",français,1847,273,12-03-2024,Bretagne,grippe aviaire,poulets,presse,"Un foyer de grippe aviaire a été détecté en Bretagne..."
-```
-
----
-
-### Exemple 2 : Site protégé WAHIS (avec ScrapingBee)
-
-**Input :**
-```csv
-code171,https://wahis.woah.org/#/in-review/5294
-```
-
-**Logs :**
-```
-🔒 Site protégé détecté : https://wahis.woah.org/#/in-review/5294
-→ Utilisation directe de ScrapingBee...
-📡 Appel ScrapingBee pour : https://wahis.woah.org/#/in-review/5294
-✅ ScrapingBee : succès
-✓ Contenu valide récupéré
-```
-
----
-
-### Exemple 3 : Échec de scraping
-
-**Output :**
-```csv
-code999,https://site-inaccessible.com,"Échec du scraping","Le contenu n'a pas pu être extrait",inconnu,0,0,inconnue,inconnu,inconnue,inconnu,inconnu,"Scraping échoué"
-```
-
-## 🤝 Alternatives LLM
-
-### 1. Ollama (Recommandé - Gratuit)
-✅ Gratuit, local, pas de limite  
-✅ Multilingue excellent  
-✅ Pas besoin d'API key  
-✅ Fonctionne hors ligne  
-
-**Modèles recommandés :**
-- `llama3.2` : Équilibre vitesse/qualité (par défaut)
-- `llama3.2:1b` : Plus rapide, qualité correcte
-- `llama3.1:8b` : Meilleure qualité, plus lent
+**Vérifications :**
+1. Clé correcte sur [dashboard](https://www.scrapingbee.com/dashboard)
+2. Pas d'espaces avant/après la clé
+3. Crédits disponibles (1000 gratuits)
+</details>
 
 ---
 
 ## 📈 Performance
 
-| Étape | Temps moyen | Notes |
-|-------|-------------|-------|
-| Scraping (Selenium) | 3-5 sec/URL | Sites standards |
-| Scraping (ScrapingBee) | 5-8 sec/URL | Sites protégés |
-| Analyse LLM (fast) | 8-12 sec/article | Mode rapide |
-| Analyse LLM (normal) | 25-35 sec/article | Mode précis |
-| **Total (50 URLs, fast)** | **12-18 minutes** | Recommandé |
-| **Total (50 URLs, normal)** | **28-38 minutes** | Production |
+| Configuration | Temps/URL | Total 50 URLs |
+|---------------|-----------|---------------|
+| **Selenium seul** | 3-5 sec | ~4 minutes |
+| **+ LLM (Llama 3.2)** | 8-12 sec | ~10 minutes |
+| **+ ScrapingBee** | 5-8 sec | +2-3 minutes |
+| **Total estimé** | **10-15 sec** | **12-18 minutes** |
 
 **Facteurs d'impact :**
 - Vitesse CPU/GPU
 - Longueur des articles
-- Sites protégés (+ lent)
-- Modèle LLM utilisé
+- Sites protégés (+3-5 sec)
+- Connexion internet
 
-## 🐛 Logs et Debugging
+---
 
-### Fichiers de logs
+## 🎨 Dashboard - Aperçu
+
+Le dashboard Dash/Plotly offre :
+
+### 📊 KPIs en temps réel
+- Total d'articles
+- Moyenne de mots
+- Nombre de maladies
+- Nombre d'animaux
+- Nombre de lieux
+
+### 📈 Graphiques interactifs
+- 🌍 Répartition par langue (donut)
+- 📰 Répartition par source (bar)
+- 🦠 Top 15 maladies (horizontal bar)
+- 🐾 Top 15 animaux (horizontal bar)
+- 📍 Top 15 lieux (horizontal bar)
+- 📊 Distribution statistique (box plot)
+
+### 🔍 Filtres dynamiques
+- Langue
+- Type de source
+- Lieu
+- Maladie
+- Animal
+
+### 📋 Tableau de données
+- Affichage des 45 derniers articles après nettoyage
+- Pagination
+- Tri par colonne
+
+---
+
+## 🧪 Tests
+
+### Test complet de l'installation
 
 ```bash
-# Log principal
-data/logs/scraping.log
-
-# Voir en temps réel
-tail -f data/logs/scraping.log
-
-# Chercher les erreurs
-grep "ERROR" data/logs/scraping.log
-grep "❌" data/logs/scraping.log
+python test.py
 ```
 
-### Logs détaillés
-
-Le script génère des logs structurés :
-
+**Résultat attendu :**
 ```
+🧪 TEST D'INSTALLATION
 ============================================================
-[6/50] Traitement [code156]
-URL: https://www.elfagr.org/4789113
+🔍 Test des imports...
+  ✓ selenium
+  ✓ bs4
+  ✓ pandas
+  ✓ langdetect
+✅ Tous les modules sont installés
+
+🔍 Test de Selenium...
+✅ Selenium fonctionne correctement
+
+🔍 Test d'Ollama...
+  ✓ Ollama est actif
+  Modèles installés:
+    - llama3.2:latest
+✅ Llama 3.2 est installé
+
+🔍 Test de la structure des dossiers...
+  ✓ data/input
+  ✓ data/output
+  ✓ data/logs
+✅ Structure des dossiers OK
+
+🔍 Test du fichier d'entrée...
+  ✓ Fichier trouvé avec 50 URLs
+✅ Fichier d'entrée valide
+
 ============================================================
-🔒 Site protégé détecté : https://www.elfagr.org/4789113
-→ Utilisation directe de ScrapingBee...
-📡 Appel ScrapingBee pour : https://www.elfagr.org/4789113
-✅ ScrapingBee : succès
-✓ Contenu valide récupéré
-→ Extraction LLM en cours (mode: fast)...
-→ Extraction des métadonnées...
-→ Métadonnées extraites: grippe aviaire / poulets / Égypte
-→ Génération résumé 50 mots...
-→ Génération résumé 100 mots...
-→ Génération résumé 150 mots...
-✅ Traité avec succès
-   • Titre: تفشي أنفلونزا الطيور في القاهرة
-   • Mots: 486
-   • Langue: arabic
-💾 Sauvegarde intermédiaire (6 résultats)
+📊 RÉSUMÉ DES TESTS
+============================================================
+Imports........................ ✅ PASS
+Selenium....................... ✅ PASS
+Ollama......................... ✅ PASS
+Dossiers....................... ✅ PASS
+Fichier d'entrée............... ✅ PASS
+
+🎉 TOUS LES TESTS SONT PASSÉS !
 ```
 
-### Mode debug (voir le navigateur)
+---
 
-Dans `src/scraper.py`, ligne 13, **commenter** :
+## 💡 Bonnes Pratiques
 
-```python
-# options.add_argument("--headless")  # ← Désactivé
+### Avant de lancer sur 50 URLs
+
+1. **Testez sur 3-5 URLs** :
+```csv
+code,url
+code151,https://lc.cx/nKVbsM
+code156,https://www.elfagr.org/4789113
 ```
 
-Le navigateur s'ouvrira et vous verrez le scraping en direct.
-
-## 💡 Conseils et Bonnes Pratiques
-
-### 🎯 Avant de lancer sur 50 URLs
-
-1. **Testez sur 3-5 URLs d'abord**
-   ```csv
-   code,url
-   test1,https://example1.com
-   test2,https://example2.com
-   ```
-
-2. **Vérifiez la qualité du scraping**
-   - Ouvrez `output.csv`
-   - Vérifiez que les titres sont corrects
+2. **Vérifiez la qualité** :
+   - Ouvrez `data/output/output_dataset.csv`
+   - Vérifiez les titres
    - Vérifiez la longueur du contenu (> 100 mots)
 
-3. **Validez les résumés LLM**
+3. **Validez les résumés LLM** :
    - Lisez quelques résumés
-   - Vérifiez qu'ils sont en français
    - Vérifiez la cohérence
 
-### ⚡ Optimiser les performances
+### Optimisation
 
-1. **Utiliser le mode fast** (ligne 10 main.py)
-2. **Traiter par batch** : 10-15 URLs à la fois
-3. **Éviter les heures de pointe** pour ScrapingBee
-4. **Fermer les autres applications** qui consomment RAM/CPU
+- ✅ Traiter par batch de 10-15 URLs
+- ✅ Éviter heures de pointe pour ScrapingBee
+- ✅ Fermer applications gourmandes
+- ✅ Ajouter délais entre requêtes (2 sec recommandé)
 
-### 🔒 Sécurité et Éthique
+### Sécurité
 
-1. **Respectez les robots.txt**
-   ```bash
-   curl https://example.com/robots.txt
-   ```
+- ✅ Respectez robots.txt
+- ✅ Ne partagez jamais vos clés API
+- ✅ Révoquez clés de test
+- ❌ Ne commitez pas les clés dans Git
 
-2. **Ajoutez des délais** entre requêtes (déjà fait : 2 sec)
+---
 
-3. **Ne partagez jamais vos clés API**
-   - ✅ Utilisez `.env`
-   - ❌ Ne commitez pas les clés dans Git
+## 📚 Dépendances Principales
 
-4. **Révoquez les clés de test**
-   - ScrapingBee : https://www.scrapingbee.com/dashboard
+| Package | Version | Description |
+|---------|---------|-------------|
+| selenium | 4.15.2 | Web scraping |
+| beautifulsoup4 | 4.12.2 | Parsing HTML |
+| pandas | 2.1.3 | Manipulation données |
+| langdetect | 1.0.9 | Détection langue |
+| requests | 2.31.0 | Requêtes HTTP |
+| dash | 2.14.2 | Dashboard interactif |
+| plotly | 5.18.0 | Visualisations |
 
-### 📊 Gérer de gros volumes
+---
 
-Pour > 100 URLs :
+## 🤝 Contribution
 
-1. **Divisez le fichier** en plusieurs CSV
-2. **Lancez en parallèle** (avec prudence)
-3. **Surveillez les crédits** ScrapingBee
-4. **Sauvegardez régulièrement** (déjà fait : tous les 3 articles)
+Les contributions sont les bienvenues ! Pour contribuer :
 
-## 📚 Ressources et Documentation
+1. Fork le projet
+2. Ajouter un nouveau remote (`git remote add origin https://github.com/raniamaamer/Maladies-Animales.git`)
+3. Commit vos changements (`git commit -m 'Ajout fonctionnalité'`)
+4. Push vers la branche (`git push `)
 
-### Dépendances Principales
-
-- **Selenium** : https://selenium-python.readthedocs.io
-- **BeautifulSoup4** : https://www.crummy.com/software/BeautifulSoup/bs4/doc/
-- **Ollama** : https://ollama.ai/docs
-- **ScrapingBee** : https://www.scrapingbee.com/documentation
-- **Pandas** : https://pandas.pydata.org/docs/
-
-### Tutoriels
-
-- Selenium : https://realpython.com/modern-web-automation-with-python-and-selenium/
-- Web Scraping éthique : https://www.scrapehero.com/how-to-prevent-getting-blacklisted-while-scraping/
-- Ollama guides : https://github.com/ollama/ollama/tree/main/docs
-
-## 📞 Support et Contribution
-
-### Problème non résolu ?
-
-1. ✅ Vérifiez les logs : `data/logs/scraping.log`
-2. ✅ Testez Ollama : `ollama run llama3.2 "test"`
-3. ✅ Testez ScrapingBee : vérifiez les crédits
-4. ✅ Testez sur une seule URL simple d'abord
-
-### Améliorations futures
-
-- [ ] Support multi-threading
-- [ ] Interface web (Flask/Streamlit)
-- [ ] Export en JSON/Excel
-- [ ] Détection automatique de la langue du résumé
-- [ ] Cache des résultats pour éviter re-scraping
 ---
